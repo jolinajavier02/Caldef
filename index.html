@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalDef - Calorie Deficit Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <span data-translate="app_title">CalDef</span>
+                </h1>
+                <div class="header-controls">
+                    <select id="languageSelect" class="language-select">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="ja">日本語</option>
+                        <option value="fil">Filipino</option>
+                        <option value="hi">हिन्दी</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="zh">中文</option>
+                        <option value="ko">한국어</option>
+                    <option value="ar">العربية</option>
+                    <option value="el">Ελληνικά</option>
+                    <option value="pt">Português</option>
+                    <option value="ru">Русский</option>
+                    <option value="th">ภาษาไทย</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="vi">Tiếng Việt</option>
+                </select>
+                    <button id="themeToggle" class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page 1: User Setup -->
+            <section id="setupPage" class="page active">
+                <div class="container">
+                    <div class="setup-card">
+                        <h2 data-translate="setup_title">Set Your Calorie Goals</h2>
+                        <p data-translate="setup_subtitle">Let's calculate your daily calorie needs based on your profile</p>
+                        
+                        <form id="setupForm" class="setup-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-translate="gender">Gender</label>
+                                    <select id="gender" required>
+                                        <option value="" data-translate="select_option">Select...</option>
+                                        <option value="male" data-translate="male">Male</option>
+                                        <option value="female" data-translate="female">Female</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label data-translate="age">Age</label>
+                                    <input type="number" id="age" min="10" max="120" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-translate="height">Height</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="height" min="100" max="250" required>
+                                        <select id="heightUnit">
+                                            <option value="cm">cm</option>
+                                            <option value="in">in</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label data-translate="current_weight">Current Weight</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="currentWeight" min="30" max="300" step="0.1" required>
+                                        <select id="weightUnit">
+                                            <option value="kg">kg</option>
+                                            <option value="lbs">lbs</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-translate="target_weight">Target Weight</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="targetWeight" min="30" max="300" step="0.1" required>
+                                        <span class="unit-display" id="targetWeightUnit">kg</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label data-translate="activity_level">Activity Level</label>
+                                    <select id="activityLevel" required>
+                                        <option value="" data-translate="select_option">Select...</option>
+                                        <option value="1.2" data-translate="sedentary">Sedentary</option>
+                                        <option value="1.375" data-translate="light">Light Activity</option>
+                                        <option value="1.55" data-translate="moderate">Moderate Activity</option>
+                                        <option value="1.725" data-translate="active">Very Active</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary" data-translate="calculate_goals">
+                                <i class="fas fa-calculator"></i>
+                                Calculate My Goals
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Page 2: Food Tracker -->
+            <section id="trackerPage" class="page">
+                <div class="container">
+                    <!-- Daily Summary -->
+                    <div class="daily-summary">
+                        <div class="summary-card">
+                            <h3 data-translate="calorie_goal">Calorie Goal</h3>
+                            <div class="goals-grid">
+                                <div class="goal-item">
+                                    <span data-translate="calorieGoal">Calorie Goal</span>
+                                    <div class="goal-value" id="calorieGoalDisplay">0</div>
+                                </div>
+                                <div class="goal-item">
+                                    <span data-translate="consumed">Consumed</span>
+                                    <div class="goal-value" id="caloriesConsumed">0</div>
+                                </div>
+                                <div class="goal-item">
+                                    <span data-translate="remaining">Remaining</span>
+                                    <div class="goal-value" id="caloriesRemaining">0</div>
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <span class="progress-text" id="progressText">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Chart -->
+                        <div class="progress-chart">
+                            <h3 data-translate="progress_chart">Weight Progress Chart</h3>
+                            <div class="chart-container">
+                                <div class="chart-placeholder">
+                                    <p data-translate="chartPlaceholder">Your weight progress will be displayed here as you track your journey</p>
+                                    <canvas id="progressCanvas" width="400" height="200" style="display: none;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Daily Reminder -->
+                        <div class="reminder-card">
+                            <i class="fas fa-bell"></i>
+                            <p data-translate="daily_reminder">⚠️ Don't forget to consume your required calories for today to stay on track with your goal!</p>
+                        </div>
+                    </div>
+
+                    <!-- Food Entry Form -->
+                    <div class="food-entry-card">
+                        <h3 data-translate="add_food">Add Food Entry</h3>
+                        <form id="foodForm" class="food-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-translate="meal_type">Meal Type</label>
+                                    <select id="mealType" required>
+                                        <option value="breakfast" data-translate="breakfast">Breakfast</option>
+                                        <option value="lunch" data-translate="lunch">Lunch</option>
+                                        <option value="dinner" data-translate="dinner">Dinner</option>
+                                        <option value="snack" data-translate="snack">Snack</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label data-translate="food_category">Food Category</label>
+                                    <select id="foodCategory" required>
+                                        <option value="" data-translate="select_option">Select...</option>
+                                        <option value="egg" data-translate="egg">Egg</option>
+                                        <option value="bread" data-translate="bread">Bread</option>
+                                        <option value="chicken" data-translate="chicken">Chicken</option>
+                                        <option value="potato" data-translate="potato">Potato</option>
+                                        <option value="fruit" data-translate="fruit">Fruit</option>
+                                        <option value="pasta" data-translate="pasta">Pasta</option>
+                                        <option value="rice" data-translate="rice">Rice</option>
+                                        <option value="vegetable" data-translate="vegetable">Vegetable</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label data-translate="specific_type">Specific Type</label>
+                                    <select id="specificType" onchange="calorieTracker.displayRecipe(this.value)" required>
+                                        <option value="" data-translate="select_category_first">Select category first</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label data-translate="quantity">Quantity</label>
+                                    <div class="input-with-unit">
+                                        <input type="number" id="quantity" min="0.1" step="0.1" required>
+                                        <select id="unit">
+                                            <option value="g">g</option>
+                                            <option value="kg">kg</option>
+                                            <option value="pcs" data-translate="pieces">pcs</option>
+                                            <option value="cup" data-translate="cup">cup</option>
+                                            <option value="tbsp" data-translate="tablespoon">tbsp</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary" data-translate="add_entry">
+                                <i class="fas fa-plus"></i>
+                                Add Entry
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Food Log -->
+                    <div class="food-log">
+                        <h3 data-translate="todays_log">Today's Food Log</h3>
+                        <div id="foodEntries" class="food-entries">
+                            <!-- Food entries will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="notes-card">
+                        <div class="notes-header">
+                            <h3 data-translate="daily_notes">Daily Notes</h3>
+                            <div class="notes-actions">
+                                <button class="btn-secondary btn-small" onclick="calorieTracker.showNotesHistory()">
+                                    <i class="fas fa-history"></i>
+                                    <span data-translate="history">History</span>
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="dailyNotes" placeholder="Add your notes, symptoms, or observations..." data-translate-placeholder="notes_placeholder"></textarea>
+                        <button id="saveNotes" class="btn-secondary" data-translate="save_notes">Save Notes</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Navigation -->
+        <nav class="bottom-nav">
+            <button id="navSetup" class="nav-item active" data-page="setupPage">
+                <i class="fas fa-user-cog"></i>
+                <span data-translate="setup">Setup</span>
+            </button>
+            <button id="navTracker" class="nav-item" data-page="trackerPage">
+                <i class="fas fa-utensils"></i>
+                <span data-translate="tracker">Tracker</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="translations.js"></script>
+    <script src="foodData.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
