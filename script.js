@@ -593,7 +593,18 @@ class CalorieTracker {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  window.calorieTracker = new CalorieTracker();
+  // Show splash screen for 2 seconds
+  setTimeout(() => {
+    const splashScreen = document.getElementById('splashScreen');
+    const appContainer = document.querySelector('.app-container');
+    
+    // Remove splash screen immediately without fade
+    splashScreen.style.display = 'none';
+    appContainer.style.opacity = '1';
+    window.calorieTracker = new CalorieTracker();
+    // Ensure we land on setup page
+    window.calorieTracker.showPage('setupPage');
+  }, 2500); // Show splash for 2.5 seconds
 });
 
 // Service Worker registration for PWA capabilities (optional)

@@ -2,7 +2,8 @@
 const translations = {
   en: {
     app_title: "CalDef",
-    setup_title: "Set Your Calorie Goals",
+     splash_tagline: "Your Personal Calorie Deficit Tracker",
+     setup_title: "Set Your Calorie Goals",
     setup_subtitle: "Let's calculate your daily calorie needs based on your profile",
     gender: "Gender",
     male: "Male",
@@ -67,8 +68,9 @@ const translations = {
     notes_saved: "Notes saved successfully!"
   },
   es: {
-    app_title: "CalDef",
-    setup_title: "Establece tus Objetivos de Calorías",
+     app_title: "CalDef",
+     splash_tagline: "Tu Rastreador Personal de Déficit Calórico",
+     setup_title: "Establece tus Objetivos de Calorías",
     setup_subtitle: "Calculemos tus necesidades calóricas diarias basadas en tu perfil",
     gender: "Género",
     male: "Masculino",
@@ -131,8 +133,9 @@ const translations = {
     notes_saved: "¡Notas guardadas exitosamente!"
   },
   ja: {
-    app_title: "CalDef",
-    setup_title: "カロリー目標を設定",
+     app_title: "CalDef",
+     splash_tagline: "あなたの個人的なカロリー不足トラッカー",
+     setup_title: "カロリー目標を設定する",
     setup_subtitle: "あなたのプロフィールに基づいて1日のカロリー必要量を計算しましょう",
     gender: "性別",
     male: "男性",
@@ -196,6 +199,7 @@ const translations = {
   },
   fil: {
     app_title: "CalDef",
+    splash_tagline: "Ang Inyong Personal na Calorie Deficit Tracker",
     setup_title: "Itakda ang Inyong Calorie Goals",
     setup_subtitle: "Kalkulahin natin ang inyong pang-araw-araw na pangangailangan sa calories base sa inyong profile",
     gender: "Kasarian",
@@ -260,6 +264,7 @@ const translations = {
   },
   hi: {
     app_title: "CalDef",
+    splash_tagline: "आपका व्यक्तिगत कैलोरी डेफिसिट ट्रैकर",
     setup_title: "अपने कैलोरी लक्ष्य निर्धारित करें",
     setup_subtitle: "आइए आपकी प्रोफ़ाइल के आधार पर आपकी दैनिक कैलोरी आवश्यकताओं की गणना करते हैं",
     gender: "लिंग",
@@ -324,6 +329,7 @@ const translations = {
   },
   fr: {
     app_title: "CalDef",
+    splash_tagline: "Votre Tracker Personnel de Déficit Calorique",
     setup_title: "Définissez vos Objectifs Caloriques",
     setup_subtitle: "Calculons vos besoins caloriques quotidiens basés sur votre profil",
     gender: "Sexe",
@@ -388,6 +394,7 @@ const translations = {
   },
   de: {
     app_title: "CalDef",
+    splash_tagline: "Ihr Persönlicher Kaloriendefizit-Tracker",
     setup_title: "Setzen Sie Ihre Kalorienziele",
     setup_subtitle: "Lassen Sie uns Ihren täglichen Kalorienbedarf basierend auf Ihrem Profil berechnen",
     gender: "Geschlecht",
@@ -452,6 +459,7 @@ const translations = {
   },
   zh: {
     app_title: "CalDef",
+    splash_tagline: "您的个人卡路里赤字追踪器",
     setup_title: "设置您的卡路里目标",
     setup_subtitle: "让我们根据您的个人资料计算您的每日卡路里需求",
     gender: "性别",
@@ -516,6 +524,7 @@ const translations = {
   },
   ko: {
     app_title: "CalDef",
+    splash_tagline: "당신의 개인 칼로리 적자 추적기",
     setup_title: "칼로리 목표 설정",
     setup_subtitle: "프로필을 기반으로 일일 칼로리 필요량을 계산해보겠습니다",
     gender: "성별",
@@ -582,6 +591,7 @@ const translations = {
   },
   ar: {
     app_title: "CalDef",
+    splash_tagline: "متتبع عجز السعرات الحرارية الشخصي الخاص بك",
     setup_title: "حدد أهداف السعرات الحرارية",
     setup_subtitle: "دعنا نحسب احتياجاتك اليومية من السعرات الحرارية بناءً على ملفك الشخصي",
     gender: "الجنس",
@@ -648,6 +658,7 @@ const translations = {
    },
    el: {
      app_title: "CalDef",
+     splash_tagline: "Ο Προσωπικός σας Παρακολουθητής Ελλείμματος Θερμίδων",
      setup_title: "Ορισμός Στόχων Θερμίδων",
      setup_subtitle: "Ας υπολογίσουμε τις ημερήσιες ανάγκες σας σε θερμίδες βάσει του προφίλ σας",
      gender: "Φύλο",
@@ -714,6 +725,7 @@ const translations = {
    },
    pt: {
      app_title: "CalDef",
+     splash_tagline: "Seu Rastreador Pessoal de Déficit Calórico",
      setup_title: "Definir Metas de Calorias",
      setup_subtitle: "Vamos calcular suas necessidades diárias de calorias com base no seu perfil",
      gender: "Gênero",
@@ -780,6 +792,7 @@ const translations = {
    },
    ru: {
      app_title: "CalDef",
+     splash_tagline: "Ваш Персональный Трекер Дефицита Калорий",
      setup_title: "Установить Цели по Калориям",
      setup_subtitle: "Давайте рассчитаем ваши ежедневные потребности в калориях на основе вашего профиля",
      gender: "Пол",
@@ -846,6 +859,7 @@ const translations = {
    },
    th: {
      app_title: "CalDef",
+     splash_tagline: "เครื่องมือติดตามการขาดแคลอรี่ส่วนบุคคลของคุณ",
      setup_title: "ตั้งเป้าหมายแคลอรี่",
      setup_subtitle: "มาคำนวณความต้องการแคลอรี่รายวันของคุณตามโปรไฟล์ของคุณ",
      gender: "เพศ",
@@ -912,6 +926,7 @@ const translations = {
    },
    tr: {
      app_title: "CalDef",
+     splash_tagline: "Kişisel Kalori Açığı Takipçiniz",
      setup_title: "Kalori Hedeflerini Belirle",
      setup_subtitle: "Profilinize göre günlük kalori ihtiyaçlarınızı hesaplayalım",
      gender: "Cinsiyet",
@@ -978,6 +993,7 @@ const translations = {
    },
    vi: {
      app_title: "CalDef",
+     splash_tagline: "Trình Theo Dõi Thiếu Hụt Calo Cá Nhân Của Bạn",
      setup_title: "Đặt Mục Tiêu Calo",
      setup_subtitle: "Hãy tính toán nhu cầu calo hàng ngày của bạn dựa trên hồ sơ của bạn",
      gender: "Giới Tính",
