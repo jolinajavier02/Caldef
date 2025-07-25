@@ -446,7 +446,54 @@ const foodDatabase = {
        beef_bourguignon: { name: "Beef Bourguignon", calories_per_100g: 201, recipe: "Beef stewed in red wine with vegetables" },
        macarons: { name: "Macarons", calories_per_100g: 300, recipe: "Delicate sandwich cookies with ganache filling" }
      }
-   }
+   },
+
+  // Desserts & Baked Goods
+  pancake: {
+    name: "Pancake",
+    types: {
+      plain: { name: "Plain Pancake", calories_per_100g: 227 },
+      blueberry: { name: "Blueberry Pancake", calories_per_100g: 250 },
+      chocolate_chip: { name: "Chocolate Chip Pancake", calories_per_100g: 280 },
+      banana: { name: "Banana Pancake", calories_per_100g: 240 },
+      whole_wheat: { name: "Whole Wheat Pancake", calories_per_100g: 200 },
+      protein: { name: "Protein Pancake", calories_per_100g: 180 },
+      buttermilk: { name: "Buttermilk Pancake", calories_per_100g: 235 },
+      oat: { name: "Oat Pancake", calories_per_100g: 210 }
+    }
+  },
+  cake: {
+    name: "Cake",
+    types: {
+      chocolate: { name: "Chocolate Cake", calories_per_100g: 371 },
+      vanilla: { name: "Vanilla Cake", calories_per_100g: 349 },
+      red_velvet: { name: "Red Velvet Cake", calories_per_100g: 380 },
+      carrot: { name: "Carrot Cake", calories_per_100g: 415 },
+      cheesecake: { name: "Cheesecake", calories_per_100g: 321 },
+      lemon: { name: "Lemon Cake", calories_per_100g: 350 },
+      strawberry: { name: "Strawberry Cake", calories_per_100g: 340 },
+      black_forest: { name: "Black Forest Cake", calories_per_100g: 400 },
+      pound_cake: { name: "Pound Cake", calories_per_100g: 389 },
+      sponge: { name: "Sponge Cake", calories_per_100g: 294 }
+    }
+  },
+  salad: {
+    name: "Salad",
+    types: {
+      caesar: { name: "Caesar Salad", calories_per_100g: 158 },
+      greek: { name: "Greek Salad", calories_per_100g: 107 },
+      garden: { name: "Garden Salad", calories_per_100g: 25 },
+      cobb: { name: "Cobb Salad", calories_per_100g: 180 },
+      caprese: { name: "Caprese Salad", calories_per_100g: 166 },
+      waldorf: { name: "Waldorf Salad", calories_per_100g: 145 },
+      potato_salad: { name: "Potato Salad", calories_per_100g: 143 },
+      coleslaw: { name: "Coleslaw", calories_per_100g: 152 },
+      tuna_salad: { name: "Tuna Salad", calories_per_100g: 187 },
+      chicken_salad: { name: "Chicken Salad", calories_per_100g: 201 },
+      fruit_salad: { name: "Fruit Salad", calories_per_100g: 50 },
+      quinoa_salad: { name: "Quinoa Salad", calories_per_100g: 120 }
+    }
+  }
  };
 
 // Unit conversion factors (to grams)
