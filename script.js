@@ -89,6 +89,12 @@ class CalorieTracker {
       saveNotesBtn.addEventListener('click', () => this.saveNotes());
     }
 
+    // History button - add event listener as backup
+    const historyBtn = document.querySelector('.notes-actions button');
+    if (historyBtn) {
+      historyBtn.addEventListener('click', () => this.showNotesHistory());
+    }
+
     // Load saved notes
     const dailyNotesTextarea = document.getElementById('dailyNotes');
     if (dailyNotesTextarea) {
