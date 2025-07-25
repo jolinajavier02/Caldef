@@ -244,6 +244,12 @@ class CalorieTracker {
       return;
     }
 
+    // Add default "Select specific type" option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = translationManager.translate('select_specific_type');
+    specificType.appendChild(defaultOption);
+
     const types = FoodCalculator.getFoodTypes(category);
     Object.keys(types).forEach(typeKey => {
       const option = document.createElement('option');
@@ -460,14 +466,19 @@ class CalorieTracker {
     ctx.font = '11px Inter, sans-serif';
     
     // Calculate monthly progression if we have user profile
-    if (this.userProfile && this.userProfile.currentWeight && this.userProfile.targetWeight) {
+    if (this.userProfile && this.userProfile.currentWeight && this.userProfile.targetWeight && this.userProfile.targetCalories && this.userProfile.dailyCalories) {
       const currentWeight = this.userProfile.currentWeight;
       const targetWeight = this.userProfile.targetWeight;
       const weightDifference = Math.abs(currentWeight - targetWeight);
       
-      // Estimate duration based on healthy weight loss (0.5-1 kg per month)
-      const monthsToTarget = Math.max(1, Math.ceil(weightDifference / 0.75)); // 0.75kg per month average
-      const maxMonths = Math.min(monthsToTarget, 12); // Cap at 12 months for display
+      // Calculate timeline based on actual calorie deficit/surplus
+      const dailyCalorieDeficit = Math.abs(this.userProfile.dailyCalories - this.userProfile.targetCalories);
+      const weeklyCalorieDeficit = dailyCalorieDeficit * 7;
+      
+      // 1 kg of fat = approximately 7700 calories
+      const weeksToTarget = Math.max(1, Math.ceil((weightDifference * 7700) / weeklyCalorieDeficit));
+      const monthsToTarget = Math.max(1, Math.ceil(weeksToTarget / 4.33)); // 4.33 weeks per month
+      const maxMonths = Math.min(monthsToTarget, 18); // Cap at 18 months for display
       
       // Generate monthly progression data
       const monthlyData = [];
@@ -562,7 +573,8 @@ class CalorieTracker {
       // Draw title
       ctx.textAlign = 'center';
       ctx.font = 'bold 14px Inter, sans-serif';
-      ctx.fillText(`${maxMonths}-Month Weight Journey`, width / 2, 25);
+      const goalType = currentWeight > targetWeight ? 'Weight Loss' : 'Weight Gain';
+      ctx.fillText(`${maxMonths}-Month ${goalType} Journey`, width / 2, 25);
       
     } else {
       // Fallback to original chart if no profile data
