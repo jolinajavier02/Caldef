@@ -723,18 +723,86 @@ body {
   color: var(--primary-color);
 }
 
-.delete-btn {
-  background: none;
-  border: none;
-  color: var(--danger-color);
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: var(--transition);
+/* Food Actions Menu */
+.food-actions {
+  position: relative;
 }
 
-.delete-btn:hover {
+.action-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-menu-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.action-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 120px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease-in-out;
+}
+
+.action-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.action-item:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.action-item.edit-btn {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.action-item.edit-btn:hover {
+  color: var(--primary-color);
+}
+
+.action-item.delete-btn:hover {
+  color: var(--danger-color);
   background-color: rgba(239, 68, 68, 0.1);
+}
+
+.action-item i {
+  font-size: 0.875rem;
+  width: 16px;
 }
 
 /* Notes */
