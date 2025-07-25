@@ -155,7 +155,7 @@ class CalorieTracker {
       currentWeight: parseFloat(document.getElementById('currentWeight').value),
       weightUnit: document.getElementById('weightUnit').value,
       targetWeight: parseFloat(document.getElementById('targetWeight').value),
-      timeGoal: parseInt(document.getElementById('timeGoal').value),
+      timeGoal: document.getElementById('timeGoal').value,
       activityLevel: parseFloat(document.getElementById('activityLevel').value)
     };
 
@@ -172,7 +172,8 @@ class CalorieTracker {
     // Calculate required daily calorie deficit/surplus based on timeline
     // 1 kg of fat = approximately 7700 calories
     const totalCaloriesNeeded = weightDifference * 7700;
-    const daysToTarget = formData.timeGoal * 7; // Convert weeks to days
+    const weeksToTarget = parseInt(formData.timeGoal); // timeGoal is in weeks
+    const daysToTarget = weeksToTarget * 7; // Convert weeks to days
     const dailyCalorieAdjustment = totalCaloriesNeeded / daysToTarget;
     
     let targetCalories = dailyCalories;
@@ -525,16 +526,9 @@ class CalorieTracker {
       // Use user's selected timeGoal if available, otherwise calculate based on calorie deficit
       let maxMonths;
       if (this.userProfile.timeGoal) {
-        // Convert timeGoal to months
-        const timeGoalMap = {
-          '2weeks': 0.5,
-          '1month': 1,
-          '2months': 2,
-          '3months': 3,
-          '6months': 6,
-          '1year': 12
-        };
-        maxMonths = timeGoalMap[this.userProfile.timeGoal] || 6; // Default to 6 months if not found
+        // Convert timeGoal (weeks) to months
+        const weeksToTarget = parseInt(this.userProfile.timeGoal);
+        maxMonths = Math.max(0.5, Math.ceil(weeksToTarget / 4.33)); // 4.33 weeks per month, minimum 0.5 months
       } else {
         // Fallback to automatic calculation
         const dailyCalorieDeficit = Math.abs(this.userProfile.dailyCalories - this.userProfile.targetCalories);
@@ -644,15 +638,25 @@ class CalorieTracker {
       // Create appropriate title based on timeGoal
       let titleText;
       if (this.userProfile.timeGoal) {
-        const timeGoalTitles = {
-          '2weeks': '2-Week',
-          '1month': '1-Month',
-          '2months': '2-Month',
-          '3months': '3-Month',
-          '6months': '6-Month',
-          '1year': '1-Year'
-        };
-        const timeTitle = timeGoalTitles[this.userProfile.timeGoal] || `${maxMonths}-Month`;
+        const weeksToTarget = parseInt(this.userProfile.timeGoal);
+        let timeTitle;
+        
+        if (weeksToTarget === 2) {
+          timeTitle = '2-Week';
+        } else if (weeksToTarget === 4) {
+          timeTitle = '1-Month';
+        } else if (weeksToTarget === 8) {
+          timeTitle = '2-Month';
+        } else if (weeksToTarget === 12) {
+          timeTitle = '3-Month';
+        } else if (weeksToTarget === 24) {
+          timeTitle = '6-Month';
+        } else if (weeksToTarget === 52) {
+          timeTitle = '1-Year';
+        } else {
+          timeTitle = `${maxMonths}-Month`;
+        }
+        
         titleText = `${timeTitle} ${goalType} Journey`;
       } else {
         titleText = `${maxMonths}-Month ${goalType} Journey`;

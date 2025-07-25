@@ -71,6 +71,7 @@ const translations = {
     select_specific_type: "Select specific type",
     quantity: "Quantity",
     enter_amount: "Enter the amount",
+    select_type: "Select type",
     pieces: "pieces",
     cup: "cup",
     tablespoon: "tbsp",
