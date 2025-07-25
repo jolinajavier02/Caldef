@@ -198,7 +198,13 @@ body {
 .app-container {
   min-height: 100vh;
   display: flex;
+  opacity: 0;
+  transition: opacity 0.3s ease;
   flex-direction: column;
+}
+
+.app-container.loaded {
+  opacity: 1;
 }
 
 /* Header */
@@ -294,27 +300,83 @@ body {
 /* Setup Page */
 .setup-card {
   background-color: var(--bg-primary);
-  border-radius: var(--border-radius);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-lg);
-  max-width: 800px;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
   margin: 0 auto;
   width: 100%;
 }
 
-.setup-card h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
+.welcome-section {
   text-align: center;
-  color: var(--primary-color);
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
 }
 
-.setup-card p {
+.welcome-section h2 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.welcome-section p {
   color: var(--text-secondary);
-  text-align: center;
-  margin-bottom: 2.5rem;
   font-size: 1.125rem;
+  margin: 0;
+}
+
+.personal-info-section,
+.body-measurements-section,
+.goals-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.personal-info-section h3,
+.body-measurements-section h3,
+.goals-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.form-group.full-width {
+  flex: 1 1 100%;
+}
+
+.calorie-highlight {
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  margin: 1rem 0;
+  box-shadow: var(--shadow-lg);
+}
+
+.calorie-highlight h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.calorie-highlight .calorie-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.calorie-highlight .calorie-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0.5rem 0 0 0;
 }
 
 /* Form Styles */
@@ -426,7 +488,7 @@ body {
 /* Daily Summary */
 .daily-summary {
   display: grid;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
@@ -444,6 +506,58 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
+}
+
+.calorie-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.calorie-highlight {
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.calorie-highlight:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.goal-highlight {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.consumed-highlight {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.remaining-highlight {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.calorie-highlight h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.calorie-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.calorie-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 0.5rem 0 0 0;
 }
 
 .goals-grid {
