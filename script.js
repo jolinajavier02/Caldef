@@ -345,6 +345,35 @@ class CalorieTracker {
     this.showNotification(translationManager.translate('entry_deleted'));
   }
 
+  editEntry(entryId) {
+    const entry = this.dailyEntries.find(e => e.id === entryId);
+    if (!entry) return;
+
+    // Populate form with entry data
+    document.getElementById('mealType').value = entry.mealType;
+    document.getElementById('foodCategory').value = entry.foodCategory;
+    document.getElementById('quantity').value = entry.quantity;
+    document.getElementById('unit').value = entry.unit;
+
+    // Update specific types dropdown
+    this.updateSpecificTypes(entry.foodCategory);
+    
+    // Wait for dropdown to populate, then set the specific type
+    setTimeout(() => {
+      document.getElementById('specificType').value = entry.specificType;
+    }, 100);
+
+    // Remove the entry being edited
+    this.dailyEntries = this.dailyEntries.filter(e => e.id !== entryId);
+    this.saveDailyEntries();
+    this.updateUI();
+
+    // Scroll to form
+    document.querySelector('.food-entry-card').scrollIntoView({ behavior: 'smooth' });
+    
+    this.showNotification('Entry loaded for editing. Make changes and add again.');
+  }
+
   // UI Updates
   updateUI() {
     this.updateDailySummary();
@@ -650,12 +679,48 @@ class CalorieTracker {
       foodEntriesContainer.appendChild(mealGroup);
     });
 
+    // Add action menu event listeners
+    foodEntriesContainer.querySelectorAll('.action-menu-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const entryId = e.target.getAttribute('data-id') || e.target.parentElement.getAttribute('data-id');
+        const menu = foodEntriesContainer.querySelector(`.action-menu[data-id="${entryId}"]`);
+        
+        // Close all other menus
+        foodEntriesContainer.querySelectorAll('.action-menu').forEach(m => {
+          if (m !== menu) m.classList.remove('show');
+        });
+        
+        // Toggle current menu
+        menu.classList.toggle('show');
+      });
+    });
+
     // Add delete event listeners
     foodEntriesContainer.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const entryId = parseInt(e.target.getAttribute('data-id'));
+        e.stopPropagation();
+        const entryId = parseInt(e.target.getAttribute('data-id') || e.target.parentElement.getAttribute('data-id'));
         this.deleteEntry(entryId);
+        // Close menu after action
+        foodEntriesContainer.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'));
       });
+    });
+
+    // Add edit event listeners
+    foodEntriesContainer.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const entryId = parseInt(e.target.getAttribute('data-id') || e.target.parentElement.getAttribute('data-id'));
+        this.editEntry(entryId);
+        // Close menu after action
+        foodEntriesContainer.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'));
+      });
+    });
+
+    // Close menus when clicking outside
+    document.addEventListener('click', () => {
+      foodEntriesContainer.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'));
     });
   }
 
@@ -680,9 +745,19 @@ class CalorieTracker {
           <div class="food-quantity">${entry.quantity} ${entry.unit}</div>
         </div>
         <div class="food-calories">${entry.calories} cal</div>
-        <button class="delete-btn" data-id="${entry.id}" title="${translationManager.translate('delete')}">
-          <i class="fas fa-trash"></i>
-        </button>
+        <div class="food-actions">
+          <button class="action-menu-btn" data-id="${entry.id}" title="Options">
+            <i class="fas fa-ellipsis-h"></i>
+          </button>
+          <div class="action-menu" data-id="${entry.id}">
+            <button class="action-item edit-btn" data-id="${entry.id}">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="action-item delete-btn" data-id="${entry.id}">
+              <i class="fas fa-trash"></i> Remove
+            </button>
+          </div>
+        </div>
       </div>
     `;
   }
