@@ -94,6 +94,12 @@ class CalorieTracker {
     if (dailyNotesTextarea) {
       dailyNotesTextarea.value = this.dailyNotes;
     }
+
+    // Profile management event listeners
+    const createNewProfileBtn = document.getElementById('createNewProfileBtn');
+    if (createNewProfileBtn) {
+      createNewProfileBtn.addEventListener('click', () => this.handleCreateNewProfile());
+    }
   }
 
   // Page navigation
@@ -198,6 +204,57 @@ class CalorieTracker {
     this.dailyNotes = this.loadDailyNotes();
     this.targetCalories = this.userProfile.targetCalories || 0;
     this.updateUI();
+  }
+
+  // Display existing profiles on the setup page
+  displayExistingProfiles() {
+    const profiles = this.getAllProfiles();
+    const profileList = document.getElementById('profileList');
+    const profileSection = document.getElementById('profileSection');
+    
+    if (profiles.length > 0) {
+      profileSection.style.display = 'block';
+      profileList.innerHTML = '';
+      
+      profiles.forEach(({ key, profile }) => {
+        const profileItem = document.createElement('div');
+        profileItem.className = 'profile-item';
+        profileItem.innerHTML = `
+          <div class="profile-info">
+            <strong>${profile.name}</strong> - ${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.currentWeight}${profile.weightUnit}
+            <br><small>Goal: ${profile.targetWeight}${profile.weightUnit} in ${this.getTimeGoalText(profile.timeGoal)}</small>
+          </div>
+          <button class="switch-profile-btn" onclick="calorieTracker.switchToProfile('${key}')">
+            ${translationManager.translate('switch_profile')}
+          </button>
+        `;
+        profileList.appendChild(profileItem);
+      });
+    } else {
+      profileSection.style.display = 'none';
+    }
+  }
+
+  // Get time goal text for display
+  getTimeGoalText(timeGoal) {
+    const timeGoalMap = {
+      '2': '2 weeks',
+      '4': '1 month',
+      '8': '2 months',
+      '12': '3 months',
+      '24': '6 months',
+      '52': '1 year'
+    };
+    return timeGoalMap[timeGoal] || `${timeGoal} weeks`;
+  }
+
+  // Handle create new profile button
+  handleCreateNewProfile() {
+    const profileSection = document.getElementById('profileSection');
+    if (profileSection) {
+      profileSection.style.display = 'none';
+    }
+    document.getElementById('setupForm').scrollIntoView({ behavior: 'smooth' });
   }
 
   // Setup form handling
