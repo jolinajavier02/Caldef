@@ -58,6 +58,7 @@ const translations = {
     vegetable: "Vegetable",
     specific_type: "Specific Type",
     select_category_first: "Select category first",
+    select_specific_type: "Select specific type",
     quantity: "Quantity",
     pieces: "pieces",
     cup: "cup",
