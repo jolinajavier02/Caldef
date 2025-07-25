@@ -16,7 +16,6 @@ class CalorieTracker {
     this.initializeTheme();
     this.updateFoodCategoryOptions();
     this.updateLanguage();
-    this.displayExistingProfiles();
     
     // Load daily data if profile exists
     if (this.currentProfileKey) {
@@ -31,7 +30,7 @@ class CalorieTracker {
     }
     
     // Show tracker page if user profile exists and has calculated goals
-    if (this.userProfile.targetCalories) {
+    if (this.userProfile && this.userProfile.targetCalories) {
       this.updateUI();
       this.showPage('trackerPage');
     } else {
@@ -123,17 +122,11 @@ class CalorieTracker {
       dailyNotesTextarea.value = this.dailyNotes;
     }
 
-    // Profile management event listeners
-    const createNewProfileBtn = document.getElementById('createNewProfileBtn');
-    if (createNewProfileBtn) {
-      createNewProfileBtn.addEventListener('click', () => this.handleCreateNewProfile());
-    }
-
-    // Name autocomplete functionality
+    // Name history functionality
     const nameInput = document.getElementById('userName');
     if (nameInput) {
       nameInput.addEventListener('input', (e) => this.handleNameInput(e));
-      nameInput.addEventListener('focus', (e) => this.handleNameInput(e));
+      nameInput.addEventListener('focus', (e) => this.handleNameFocus(e));
       nameInput.addEventListener('blur', (e) => this.handleNameBlur(e));
       nameInput.addEventListener('keydown', (e) => this.handleNameKeydown(e));
     }
@@ -161,25 +154,15 @@ class CalorieTracker {
         // No valid profile, redirect to setup
         this.showNotification('Need to setup the profile first.');
         pageId = 'setupPage';
-      } else if (!this.currentProfileKey) {
-        console.log('Creating temporary profile key');
-        // Profile exists but no current key, create a temporary one
-        this.currentProfileKey = this.generateProfileKey(this.userProfile);
-        localStorage.setItem('currentProfileKey', this.currentProfileKey);
-      }
-      
-      // Clear activity data when navigating to tracker page
-      if (pageId === 'trackerPage') {
-        console.log('Clearing daily data for tracker page');
-        this.dailyEntries = [];
-        this.dailyNotes = '';
-        this.saveDailyEntries();
-        this.saveDailyNotes();
+      } else {
+        // Load existing daily data for the tracker page
+        this.dailyEntries = this.loadDailyEntries();
+        this.dailyNotes = this.loadDailyNotes();
         
-        // Clear the notes textarea
+        // Load notes into textarea
         const dailyNotesTextarea = document.getElementById('dailyNotes');
         if (dailyNotesTextarea) {
-          dailyNotesTextarea.value = '';
+          dailyNotesTextarea.value = this.dailyNotes;
         }
       }
     }
@@ -230,142 +213,54 @@ class CalorieTracker {
     }
   }
 
-  // Profile management
+  // Name history management
+  saveNameToHistory(name) {
+    if (!name || name.trim() === '') return;
+    
+    const nameHistory = this.getNameHistory();
+    const trimmedName = name.trim();
+    
+    // Remove if already exists to avoid duplicates
+    const filteredHistory = nameHistory.filter(n => n.toLowerCase() !== trimmedName.toLowerCase());
+    
+    // Add to beginning of array
+    filteredHistory.unshift(trimmedName);
+    
+    // Keep only last 10 names
+    const limitedHistory = filteredHistory.slice(0, 10);
+    
+    localStorage.setItem('nameHistory', JSON.stringify(limitedHistory));
+  }
+
+  getNameHistory() {
+    const saved = localStorage.getItem('nameHistory');
+    return saved ? JSON.parse(saved) : [];
+  }
+
   generateProfileKey(formData) {
-    // Create a unique key based on user details
-    const keyData = {
-      name: formData.name.toLowerCase().trim(),
-      gender: formData.gender,
-      age: formData.age,
-      height: formData.height,
-      heightUnit: formData.heightUnit,
-      currentWeight: formData.currentWeight,
-      weightUnit: formData.weightUnit
-    };
-    
-    // Create a hash-like string from the key data
-    const keyString = JSON.stringify(keyData);
-    let hash = 0;
-    for (let i = 0; i < keyString.length; i++) {
-      const char = keyString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    
-    return `profile_${Math.abs(hash)}`;
+    // Create a simple key based on current timestamp and name
+    const timestamp = Date.now();
+    const name = formData.name.toLowerCase().trim().replace(/\s+/g, '_');
+    return `profile_${name}_${timestamp}`;
   }
 
-  findExistingProfile(profileKey) {
-    const profileData = localStorage.getItem(profileKey);
-    return profileData ? JSON.parse(profileData) : null;
-  }
 
-  getAllProfiles() {
-    const profiles = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('profile_') && !key.includes('_entries_') && !key.includes('_notes_')) {
-        try {
-          const profile = JSON.parse(localStorage.getItem(key));
-          profiles.push({ key, profile });
-        } catch (e) {
-          // Skip invalid profiles
-        }
-      }
-    }
-    return profiles;
-  }
 
-  switchToProfile(profileKey) {
-    this.currentProfileKey = profileKey;
-    localStorage.setItem('currentProfileKey', profileKey);
-    this.userProfile = this.loadUserProfile();
-    this.dailyEntries = this.loadDailyEntries();
-    this.dailyNotes = this.loadDailyNotes();
-    this.targetCalories = this.userProfile.targetCalories || 0;
-    
-    // Load notes into textarea
-    const dailyNotesTextarea = document.getElementById('dailyNotes');
-    if (dailyNotesTextarea) {
-      dailyNotesTextarea.value = this.dailyNotes;
-    }
-    
-    // Ensure UI updates with the loaded profile data
-    this.updateUI();
-    
-    // Show tracker page if profile has calculated goals
-    if (this.userProfile.targetCalories) {
-      this.showPage('trackerPage');
-    }
-  }
-
-  // Display existing profiles on the setup page
-    displayExistingProfiles() {
-        const profiles = this.getAllProfiles();
-        const profileList = document.getElementById('profileList');
-        const profileSection = document.getElementById('profileSection');
-        
-        if (profiles.length > 0) {
-            profileSection.style.display = 'block';
-            profileList.innerHTML = '';
-            
-            profiles.forEach(({ key, profile }) => {
-                const profileItem = document.createElement('div');
-                profileItem.className = 'profile-item';
-                profileItem.innerHTML = `
-                    <div class="profile-info">
-                        <strong>${profile.name}</strong> - ${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.currentWeight}${profile.weightUnit}
-                        <br><small>Goal: ${profile.targetWeight}${profile.weightUnit} in ${this.getTimeGoalText(profile.timeGoal)}</small>
-                    </div>
-                    <button class="switch-profile-btn" onclick="calorieTracker.switchToProfile('${key}')">
-                        ${translationManager.translate('switch_profile')}
-                    </button>
-                `;
-                profileList.appendChild(profileItem);
-            });
-        } else {
-            profileSection.style.display = 'none';
-        }
-    }
-
-  // Get time goal text for display
-  getTimeGoalText(timeGoal) {
-    const timeGoalMap = {
-      '2': '2 weeks',
-      '4': '1 month',
-      '8': '2 months',
-      '12': '3 months',
-      '24': '6 months',
-      '52': '1 year'
-    };
-    return timeGoalMap[timeGoal] || `${timeGoal} weeks`;
-  }
-
-  // Handle create new profile button
-  handleCreateNewProfile() {
-    const profileSection = document.getElementById('profileSection');
-    if (profileSection) {
-      profileSection.style.display = 'none';
-    }
-    document.getElementById('setupForm').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  // Autocomplete functionality
+  // Name autocomplete functionality
   handleNameInput(e) {
     const query = e.target.value.trim();
     if (query.length === 0) {
       this.hideAutocomplete();
-      this.clearForm();
       return;
     }
 
-    const profiles = this.getAllProfiles();
-    const matchingProfiles = profiles.filter(({ profile }) => 
-      profile.name.toLowerCase().includes(query.toLowerCase())
+    const nameHistory = this.getNameHistory();
+    const matchingNames = nameHistory.filter(name => 
+      name.toLowerCase().includes(query.toLowerCase())
     );
 
-    if (matchingProfiles.length > 0) {
-      this.showAutocomplete(matchingProfiles, query);
+    if (matchingNames.length > 0) {
+      this.showAutocomplete(matchingNames, query);
     } else {
       this.hideAutocomplete();
     }
@@ -399,8 +294,8 @@ class CalorieTracker {
       case 'Enter':
         e.preventDefault();
         if (currentIndex >= 0 && items[currentIndex]) {
-          const profileKey = items[currentIndex].dataset.profileKey;
-          this.selectProfile(profileKey);
+          const name = items[currentIndex].dataset.name;
+          this.selectName(name);
         }
         break;
       case 'Escape':
@@ -409,27 +304,26 @@ class CalorieTracker {
     }
   }
 
-  showAutocomplete(profiles, query) {
+  showAutocomplete(names, query) {
     const dropdown = document.getElementById('nameAutocomplete');
     if (!dropdown) return;
 
     dropdown.innerHTML = '';
     
-    profiles.forEach(({ key, profile }) => {
+    names.forEach(name => {
       const item = document.createElement('div');
       item.className = 'autocomplete-item';
-      item.dataset.profileKey = key;
+      item.dataset.name = name;
       
       // Highlight matching text
-      const nameHtml = this.highlightText(profile.name, query);
+      const nameHtml = this.highlightText(name, query);
       
       item.innerHTML = `
-        <div class="profile-name">${nameHtml}</div>
-        <div class="profile-details">${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.currentWeight}${profile.weightUnit}</div>
+        <div class="name-item">${nameHtml}</div>
       `;
       
       item.addEventListener('click', () => {
-        this.selectProfile(key);
+        this.selectName(name);
       });
       
       dropdown.appendChild(item);
@@ -457,62 +351,15 @@ class CalorieTracker {
     return text.replace(regex, '<strong>$1</strong>');
   }
 
-  selectProfile(profileKey) {
-    const profile = this.findExistingProfile(profileKey);
-    if (!profile) return;
-
-    // Set the current profile key
-    this.currentProfileKey = profileKey;
-    localStorage.setItem('currentProfileKey', profileKey);
-
-    // Fill form with profile data
-    this.fillFormWithProfile(profile);
+  selectName(name) {
+    // Set the name in the input field
+    document.getElementById('userName').value = name;
     
     // Hide autocomplete
     this.hideAutocomplete();
-    
-    // Show notification
-    this.showNotification(`Profile loaded: ${profile.name}`);
   }
 
-  fillFormWithProfile(profile) {
-    // Fill all form fields with profile data
-    document.getElementById('userName').value = profile.name || '';
-    document.getElementById('gender').value = profile.gender || '';
-    document.getElementById('age').value = profile.age || '';
-    document.getElementById('height').value = profile.height || '';
-    document.getElementById('heightUnit').value = profile.heightUnit || 'cm';
-    document.getElementById('currentWeight').value = profile.currentWeight || '';
-    document.getElementById('weightUnit').value = profile.weightUnit || 'kg';
-    document.getElementById('targetWeight').value = profile.targetWeight || '';
-    document.getElementById('timeGoal').value = profile.timeGoal || '';
-    document.getElementById('activityLevel').value = profile.activityLevel || '';
-    
-    // Update target weight unit display
-    const targetWeightUnit = document.getElementById('targetWeightUnit');
-    if (targetWeightUnit) {
-      targetWeightUnit.textContent = profile.weightUnit || 'kg';
-    }
-  }
 
-  clearForm() {
-    // Clear form fields when starting fresh
-    const formFields = ['gender', 'age', 'height', 'heightUnit', 'currentWeight', 'weightUnit', 'targetWeight', 'timeGoal', 'activityLevel'];
-    formFields.forEach(fieldId => {
-      const field = document.getElementById(fieldId);
-      if (field) {
-        if (field.tagName === 'SELECT') {
-          field.selectedIndex = 0;
-        } else {
-          field.value = '';
-        }
-      }
-    });
-    
-    // Reset current profile
-    this.currentProfileKey = null;
-    localStorage.removeItem('currentProfileKey');
-  }
 
   // Setup form handling
   handleSetupSubmit(e) {
@@ -534,29 +381,11 @@ class CalorieTracker {
     
     console.log('Form data:', formData);
 
-    // Check if we already have a current profile loaded (from autocomplete)
-    if (this.currentProfileKey) {
-      const existingProfile = this.findExistingProfile(this.currentProfileKey);
-      if (existingProfile && existingProfile.targetCalories) {
-        // Profile already has calculated goals, just switch to it
-        this.switchToProfile(this.currentProfileKey);
-        this.showNotification('Welcome back!');
-        this.showPage('trackerPage');
-        return;
-      }
-    }
+    // Save name to history
+    this.saveNameToHistory(formData.name);
 
-    // Generate profile key and check for existing profile
+    // Generate profile key
     const profileKey = this.generateProfileKey(formData);
-    const existingProfile = this.findExistingProfile(profileKey);
-    
-    if (existingProfile && existingProfile.targetCalories) {
-      // Load existing profile with calculated goals
-      this.switchToProfile(profileKey);
-      this.showNotification('Welcome back!');
-      this.showPage('trackerPage');
-      return;
-    }
 
     // Calculate BMR and daily calories
     const bmr = this.calculateBMR(formData);
