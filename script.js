@@ -643,7 +643,7 @@ class CalorieTracker {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const padding = 60;
+    const padding = 80;
     
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -652,71 +652,46 @@ class CalorieTracker {
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
     ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
     ctx.lineWidth = 2;
-    ctx.font = '11px Inter, sans-serif';
+    ctx.font = '12px Inter, sans-serif';
     
-    // Calculate monthly progression if we have user profile
-    if (this.userProfile && this.userProfile.currentWeight && this.userProfile.targetWeight && this.userProfile.targetCalories && this.userProfile.dailyCalories) {
-      const currentWeight = this.userProfile.currentWeight;
-      const targetWeight = this.userProfile.targetWeight;
-      const weightDifference = Math.abs(currentWeight - targetWeight);
+    // Simple chart showing only current and target weight
+    if (this.userProfile && this.userProfile.weight && this.userProfile.targetWeight) {
+      const currentWeight = parseFloat(this.userProfile.weight);
+      const targetWeight = parseFloat(this.userProfile.targetWeight);
       
-      // Use user's selected timeGoal if available, otherwise calculate based on calorie deficit
-      let maxMonths;
-      if (this.userProfile.timeGoal) {
-        // Convert timeGoal (weeks) to months
-        const weeksToTarget = parseInt(this.userProfile.timeGoal);
-        maxMonths = Math.max(0.5, Math.ceil(weeksToTarget / 4.33)); // 4.33 weeks per month, minimum 0.5 months
-      } else {
-        // Fallback to automatic calculation
-        const dailyCalorieDeficit = Math.abs(this.userProfile.dailyCalories - this.userProfile.targetCalories);
-        const weeklyCalorieDeficit = dailyCalorieDeficit * 7;
-        
-        // 1 kg of fat = approximately 7700 calories
-        const weeksToTarget = Math.max(1, Math.ceil((weightDifference * 7700) / weeklyCalorieDeficit));
-        const monthsToTarget = Math.max(1, Math.ceil(weeksToTarget / 4.33)); // 4.33 weeks per month
-        maxMonths = Math.min(monthsToTarget, 18); // Cap at 18 months for display
-      }
-      
-      // Generate monthly progression data
-      const monthlyData = [];
-      const currentDate = new Date();
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      
-      for (let i = 0; i <= maxMonths; i++) {
-        const progressDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + i, 1);
-        const progress = i / maxMonths;
-        const projectedWeight = currentWeight + (targetWeight - currentWeight) * progress;
-        
-        monthlyData.push({
-          month: monthNames[progressDate.getMonth()],
-          year: progressDate.getFullYear(),
-          weight: projectedWeight,
-          isTarget: i === maxMonths
-        });
-      }
+      // Create simple two-point data
+      const chartData = [
+        { label: 'Current Weight', weight: currentWeight, x: 0.25 },
+        { label: 'Target Weight', weight: targetWeight, x: 0.75 }
+      ];
       
       // Set weight range for chart
-      const allWeights = monthlyData.map(d => d.weight);
-      const minWeight = Math.min(...allWeights) - 2;
-      const maxWeight = Math.max(...allWeights) + 2;
+      const minWeight = Math.min(currentWeight, targetWeight) - 5;
+      const maxWeight = Math.max(currentWeight, targetWeight) + 5;
       const weightRange = maxWeight - minWeight;
       
-      // Draw axes
-      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, height - padding);
-      ctx.lineTo(width - padding, height - padding);
-      ctx.stroke();
+      // Draw chart background
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary');
+      ctx.fillRect(padding, padding, width - 2 * padding, height - 2 * padding);
       
-      // Draw progression line
+      // Draw grid lines
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-color');
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 4; i++) {
+        const y = padding + (i / 5) * (height - 2 * padding);
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+      }
+      
+      // Draw connection line between points
       ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
       ctx.lineWidth = 3;
       ctx.beginPath();
       
-      monthlyData.forEach((data, index) => {
-        const x = padding + (index / (monthlyData.length - 1)) * (width - 2 * padding);
+      chartData.forEach((data, index) => {
+        const x = padding + data.x * (width - 2 * padding);
         const y = height - padding - ((data.weight - minWeight) / weightRange) * (height - 2 * padding);
         
         if (index === 0) {
@@ -728,112 +703,55 @@ class CalorieTracker {
       ctx.stroke();
       
       // Draw data points and labels
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-      monthlyData.forEach((data, index) => {
-        const x = padding + (index / (monthlyData.length - 1)) * (width - 2 * padding);
+      chartData.forEach((data, index) => {
+        const x = padding + data.x * (width - 2 * padding);
         const y = height - padding - ((data.weight - minWeight) / weightRange) * (height - 2 * padding);
         
         // Draw point
-        if (data.isTarget) {
+        if (index === 1) { // Target weight
           ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--success-color');
-          ctx.beginPath();
-          ctx.arc(x, y, 6, 0, 2 * Math.PI);
-          ctx.fill();
+        } else { // Current weight
           ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-        } else {
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, 2 * Math.PI);
-          ctx.fill();
         }
         
-        // Draw month labels (every other month to avoid crowding)
-        if (index % 2 === 0 || data.isTarget) {
-          ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
-          ctx.textAlign = 'center';
-          ctx.fillText(`${data.month}`, x, height - padding + 15);
-          if (index === 0 || data.isTarget) {
-            ctx.fillText(`${data.year}`, x, height - padding + 28);
-          }
-        }
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.fill();
         
-        // Draw weight labels for start and target
-        if (index === 0 || data.isTarget) {
-          ctx.fillText(`${data.weight.toFixed(1)}kg`, x, y - 10);
-        }
+        // Draw weight labels
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 14px Inter, sans-serif';
+        ctx.fillText(`${data.weight.toFixed(1)}kg`, x, y - 15);
+        
+        // Draw category labels
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillText(data.label, x, height - padding + 20);
       });
       
-      // Draw weight axis labels
-      ctx.textAlign = 'right';
-      ctx.fillText(`${maxWeight.toFixed(1)}kg`, padding - 10, padding + 5);
-      ctx.fillText(`${minWeight.toFixed(1)}kg`, padding - 10, height - padding + 5);
+      // Draw weight difference
+      const weightDiff = Math.abs(targetWeight - currentWeight);
+      const diffText = currentWeight > targetWeight ? 
+        `${weightDiff.toFixed(1)}kg to lose` : 
+        `${weightDiff.toFixed(1)}kg to gain`;
+      
+      ctx.textAlign = 'center';
+      ctx.font = '13px Inter, sans-serif';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+      ctx.fillText(diffText, width / 2, height - padding + 40);
       
       // Draw title
       ctx.textAlign = 'center';
-      ctx.font = 'bold 14px Inter, sans-serif';
-      const goalType = currentWeight > targetWeight ? 'Weight Loss' : 'Weight Gain';
-      
-      // Create appropriate title based on timeGoal
-      let titleText;
-      if (this.userProfile.timeGoal) {
-        const weeksToTarget = parseInt(this.userProfile.timeGoal);
-        let timeTitle;
-        
-        if (weeksToTarget === 2) {
-          timeTitle = '2-Week';
-        } else if (weeksToTarget === 4) {
-          timeTitle = '1-Month';
-        } else if (weeksToTarget === 8) {
-          timeTitle = '2-Month';
-        } else if (weeksToTarget === 12) {
-          timeTitle = '3-Month';
-        } else if (weeksToTarget === 24) {
-          timeTitle = '6-Month';
-        } else if (weeksToTarget === 52) {
-          timeTitle = '1-Year';
-        } else {
-          timeTitle = `${maxMonths}-Month`;
-        }
-        
-        titleText = `${timeTitle} ${goalType} Journey`;
-      } else {
-        titleText = `${maxMonths}-Month ${goalType} Journey`;
-      }
-      
-      ctx.fillText(titleText, width / 2, 25);
+      ctx.font = 'bold 16px Inter, sans-serif';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
+      ctx.fillText('Weight Progress', width / 2, 30);
       
     } else {
-      // Fallback to original chart if no profile data
-      const weights = weightHistory.map(entry => entry.weight);
-      if (weights.length === 0) return;
-      
-      const minWeight = Math.min(...weights) - 2;
-      const maxWeight = Math.max(...weights) + 2;
-      const weightRange = maxWeight - minWeight;
-      
-      // Draw axes
-      ctx.beginPath();
-      ctx.moveTo(padding, padding);
-      ctx.lineTo(padding, height - padding);
-      ctx.lineTo(width - padding, height - padding);
-      ctx.stroke();
-      
-      // Draw weight line
-      if (weightHistory.length > 1) {
-        ctx.beginPath();
-        weightHistory.forEach((entry, index) => {
-          const x = padding + (index / (weightHistory.length - 1)) * (width - 2 * padding);
-          const y = height - padding - ((entry.weight - minWeight) / weightRange) * (height - 2 * padding);
-          
-          if (index === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
-          
-          ctx.fillRect(x - 2, y - 2, 4, 4);
-        });
-        ctx.stroke();
-      }
+      // Show placeholder if no profile data
+      ctx.textAlign = 'center';
+      ctx.font = '14px Inter, sans-serif';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+      ctx.fillText('Complete your profile to see weight progress', width / 2, height / 2);
     }
   }
 
@@ -1083,7 +1001,38 @@ class CalorieTracker {
     if (this.currentProfileKey) {
       const key = `${this.currentProfileKey}_entries_${this.getTodayKey()}`;
       localStorage.setItem(key, JSON.stringify(this.dailyEntries));
+      
+      // Also save to history for long-term storage
+      this.saveDailyHistory();
     }
+  }
+
+  saveDailyHistory() {
+    if (this.currentProfileKey) {
+      const today = this.getTodayKey();
+      const historyKey = `${this.currentProfileKey}_history`;
+      
+      // Get existing history
+      const existingHistory = JSON.parse(localStorage.getItem(historyKey) || '{}');
+      
+      // Update today's entry
+      existingHistory[today] = {
+        entries: [...this.dailyEntries],
+        notes: this.loadDailyNotes(),
+        timestamp: new Date().toISOString()
+      };
+      
+      // Save updated history
+      localStorage.setItem(historyKey, JSON.stringify(existingHistory));
+    }
+  }
+
+  loadDailyHistory() {
+    if (this.currentProfileKey) {
+      const historyKey = `${this.currentProfileKey}_history`;
+      return JSON.parse(localStorage.getItem(historyKey) || '{}');
+    }
+    return {};
   }
 
   loadDailyEntries() {
