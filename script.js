@@ -887,12 +887,8 @@ class CalorieTracker {
       const key = `${this.currentProfileKey}_notes_${this.getTodayKey()}`;
       localStorage.setItem(key, this.dailyNotes);
       
-      // Also save to profile-specific notes history
-      const today = this.getTodayKey();
-      const historyKey = `${this.currentProfileKey}_notesHistory`;
-      let notesHistory = JSON.parse(localStorage.getItem(historyKey)) || {};
-      notesHistory[today] = this.dailyNotes;
-      localStorage.setItem(historyKey, JSON.stringify(notesHistory));
+      // Also save to history
+      this.saveDailyHistory();
       
       this.showNotification(translationManager.translate('notes_saved'));
       
@@ -906,51 +902,31 @@ class CalorieTracker {
   showNotesHistory() {
     if (!this.currentProfileKey) return;
     
-    const historyKey = `${this.currentProfileKey}_notesHistory`;
-    const notesHistory = JSON.parse(localStorage.getItem(historyKey)) || {};
-    
-    // Get all unique dates from both notes and food entries
-    const allDates = new Set();
-    Object.keys(notesHistory).forEach(date => allDates.add(date));
-    
-    // Add dates from food entries
-    for (let i = 0; i < 30; i++) { // Check last 30 days
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const dateKey = date.toISOString().split('T')[0];
-      const entriesKey = `${this.currentProfileKey}_entries_${dateKey}`;
-      const foodEntries = localStorage.getItem(entriesKey);
-      if (foodEntries && JSON.parse(foodEntries).length > 0) {
-        allDates.add(dateKey);
-      }
-    }
-    
-    const historyEntries = Array.from(allDates)
-      .sort((a, b) => new Date(b) - new Date(a))
-      .slice(0, 10); // Show last 10 entries
+    // Get unified history
+    const history = this.loadDailyHistory();
     
     let historyHtml = '<div class="notes-history-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">';
     historyHtml += '<div style="background: var(--bg-primary); padding: 2rem; border-radius: var(--border-radius); max-width: 600px; max-height: 80vh; overflow-y: auto; width: 90%;">';
     historyHtml += '<h3>Daily History</h3>';
     
-    if (historyEntries.length === 0) {
+    const sortedDates = Object.keys(history).sort().reverse();
+    
+    if (sortedDates.length === 0) {
       historyHtml += '<p>No history found.</p>';
     } else {
-      historyEntries.forEach(date => {
+      sortedDates.forEach(date => {
+        const dayData = history[date];
         const formattedDate = new Date(date).toLocaleDateString();
-        const notes = notesHistory[date] || '';
-        const entriesKey = `${this.currentProfileKey}_entries_${date}`;
-        const foodEntries = JSON.parse(localStorage.getItem(entriesKey) || '[]');
         
         historyHtml += `<div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--border-radius);">`;
         historyHtml += `<strong style="font-size: 1.1rem; color: var(--primary-color);">${formattedDate}</strong><br>`;
         
         // Food Log Section
-        if (foodEntries.length > 0) {
+        if (dayData.entries && dayData.entries.length > 0) {
           historyHtml += '<div style="margin-top: 1rem;">';
           historyHtml += '<h4 style="margin: 0.5rem 0; color: var(--text-primary); font-size: 0.9rem;">🍽️ Food Log:</h4>';
           let totalCalories = 0;
-          foodEntries.forEach(entry => {
+          dayData.entries.forEach(entry => {
             totalCalories += entry.calories;
             historyHtml += `<div style="margin: 0.25rem 0; font-size: 0.8rem; color: var(--text-secondary);">`;
             historyHtml += `• ${entry.foodName} (${entry.quantity}${entry.unit}) - ${entry.calories} cal`;
@@ -961,14 +937,14 @@ class CalorieTracker {
         }
         
         // Notes Section
-        if (notes) {
+        if (dayData.notes) {
           historyHtml += '<div style="margin-top: 1rem;">';
           historyHtml += '<h4 style="margin: 0.5rem 0; color: var(--text-primary); font-size: 0.9rem;">📝 Notes:</h4>';
-          historyHtml += `<p style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">${notes}</p>`;
+          historyHtml += `<p style="margin: 0; font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary);">${dayData.notes}</p>`;
           historyHtml += '</div>';
         }
         
-        if (foodEntries.length === 0 && !notes) {
+        if ((!dayData.entries || dayData.entries.length === 0) && !dayData.notes) {
           historyHtml += '<p style="margin-top: 0.5rem; font-style: italic; color: var(--text-secondary); font-size: 0.85rem;">No entries for this day</p>';
         }
         
