@@ -209,7 +209,14 @@ class CalorieTracker {
     this.dailyEntries = this.loadDailyEntries();
     this.dailyNotes = this.loadDailyNotes();
     this.targetCalories = this.userProfile.targetCalories || 0;
+    
+    // Ensure UI updates with the loaded profile data
     this.updateUI();
+    
+    // Show tracker page if profile has calculated goals
+    if (this.userProfile.targetCalories) {
+      this.showPage('trackerPage');
+    }
   }
 
   // Display existing profiles on the setup page
@@ -227,7 +234,7 @@ class CalorieTracker {
                 profileItem.className = 'profile-item';
                 profileItem.innerHTML = `
                     <div class="profile-info">
-                        <strong>${profile.name}</strong> - ${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.weight}${profile.weightUnit}
+                        <strong>${profile.name}</strong> - ${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.currentWeight}${profile.weightUnit}
                         <br><small>Goal: ${profile.targetWeight}${profile.weightUnit} in ${this.getTimeGoalText(profile.timeGoal)}</small>
                     </div>
                     <button class="switch-profile-btn" onclick="calorieTracker.switchToProfile('${key}')">
@@ -661,8 +668,8 @@ class CalorieTracker {
     ctx.font = '12px Inter, sans-serif';
     
     // Simple chart showing only current and target weight
-    if (this.userProfile && this.userProfile.weight && this.userProfile.targetWeight) {
-      const currentWeight = parseFloat(this.userProfile.weight);
+    if (this.userProfile && this.userProfile.currentWeight && this.userProfile.targetWeight) {
+      const currentWeight = parseFloat(this.userProfile.currentWeight);
       const targetWeight = parseFloat(this.userProfile.targetWeight);
       
       // Create simple two-point data
