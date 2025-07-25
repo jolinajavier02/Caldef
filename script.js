@@ -207,33 +207,33 @@ class CalorieTracker {
   }
 
   // Display existing profiles on the setup page
-  displayExistingProfiles() {
-    const profiles = this.getAllProfiles();
-    const profileList = document.getElementById('profileList');
-    const profileSection = document.getElementById('profileSection');
-    
-    if (profiles.length > 0) {
-      profileSection.style.display = 'block';
-      profileList.innerHTML = '';
-      
-      profiles.forEach(({ key, profile }) => {
-        const profileItem = document.createElement('div');
-        profileItem.className = 'profile-item';
-        profileItem.innerHTML = `
-          <div class="profile-info">
-            <strong>${profile.name}</strong> - ${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.currentWeight}${profile.weightUnit}
-            <br><small>Goal: ${profile.targetWeight}${profile.weightUnit} in ${this.getTimeGoalText(profile.timeGoal)}</small>
-          </div>
-          <button class="switch-profile-btn" onclick="calorieTracker.switchToProfile('${key}')">
-            ${translationManager.translate('switch_profile')}
-          </button>
-        `;
-        profileList.appendChild(profileItem);
-      });
-    } else {
-      profileSection.style.display = 'none';
+    displayExistingProfiles() {
+        const profiles = this.getAllProfiles();
+        const profileList = document.getElementById('profileList');
+        const profileSection = document.getElementById('profileSection');
+        
+        if (profiles.length > 0) {
+            profileSection.style.display = 'block';
+            profileList.innerHTML = '';
+            
+            profiles.forEach(({ key, profile }) => {
+                const profileItem = document.createElement('div');
+                profileItem.className = 'profile-item';
+                profileItem.innerHTML = `
+                    <div class="profile-info">
+                        <strong>${profile.name}</strong> - ${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.weight}${profile.weightUnit}
+                        <br><small>Goal: ${profile.targetWeight}${profile.weightUnit} in ${this.getTimeGoalText(profile.timeGoal)}</small>
+                    </div>
+                    <button class="switch-profile-btn" onclick="calorieTracker.switchToProfile('${key}')">
+                        ${translationManager.translate('switch_profile')}
+                    </button>
+                `;
+                profileList.appendChild(profileItem);
+            });
+        } else {
+            profileSection.style.display = 'none';
+        }
     }
-  }
 
   // Get time goal text for display
   getTimeGoalText(timeGoal) {
