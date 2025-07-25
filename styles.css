@@ -726,6 +726,7 @@ body {
 /* Food Actions Menu */
 .food-actions {
   position: relative;
+  z-index: 1;
 }
 
 .action-menu-btn {
@@ -755,7 +756,7 @@ body {
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   min-width: 120px;
-  z-index: 1000;
+  z-index: 9999;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);

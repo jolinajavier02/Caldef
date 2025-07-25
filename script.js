@@ -797,11 +797,14 @@ class CalorieTracker {
   }
 
   createFoodItemHTML(entry) {
+    // Format time from timestamp
+    const timeString = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    
     return `
       <div class="food-item">
         <div class="food-details">
           <div class="food-name">${entry.foodName}</div>
-          <div class="food-quantity">${entry.quantity} ${entry.unit}</div>
+          <div class="food-quantity">${entry.quantity} ${entry.unit}${timeString ? ` • ${timeString}` : ''}</div>
         </div>
         <div class="food-calories">${entry.calories} cal</div>
         <div class="food-actions">
