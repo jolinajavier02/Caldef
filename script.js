@@ -2,6 +2,7 @@
 class CalorieTracker {
   constructor() {
     this.currentPage = 'setupPage';
+    this.currentProfileKey = localStorage.getItem('currentProfileKey') || null;
     this.userProfile = this.loadUserProfile();
     this.dailyEntries = this.loadDailyEntries();
     this.dailyNotes = this.loadDailyNotes();
