@@ -330,7 +330,7 @@ class CalorieTracker {
     const quantity = parseFloat(document.getElementById('quantity').value);
     const unit = document.getElementById('unit').value;
 
-    if (!foodCategory || !specificType || !quantity) {
+    if (!foodCategory || !specificType || !quantity || !unit) {
       return;
     }
 
@@ -357,6 +357,7 @@ class CalorieTracker {
     e.target.reset();
     document.getElementById('specificType').innerHTML = '<option value="">' + 
       translationManager.translate('select_category_first') + '</option>';
+    document.getElementById('unit').value = ''; // Reset to "Select type"
     
     this.showNotification(translationManager.translate('entry_added'));
   }
