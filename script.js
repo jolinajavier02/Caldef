@@ -143,6 +143,62 @@ class CalorieTracker {
     }
   }
 
+  // Profile management
+  generateProfileKey(formData) {
+    // Create a unique key based on user details
+    const keyData = {
+      name: formData.name.toLowerCase().trim(),
+      gender: formData.gender,
+      age: formData.age,
+      height: formData.height,
+      heightUnit: formData.heightUnit,
+      currentWeight: formData.currentWeight,
+      weightUnit: formData.weightUnit
+    };
+    
+    // Create a hash-like string from the key data
+    const keyString = JSON.stringify(keyData);
+    let hash = 0;
+    for (let i = 0; i < keyString.length; i++) {
+      const char = keyString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    return `profile_${Math.abs(hash)}`;
+  }
+
+  findExistingProfile(profileKey) {
+    const profileData = localStorage.getItem(profileKey);
+    return profileData ? JSON.parse(profileData) : null;
+  }
+
+  getAllProfiles() {
+    const profiles = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('profile_') && !key.includes('_entries_') && !key.includes('_notes_')) {
+        try {
+          const profile = JSON.parse(localStorage.getItem(key));
+          profiles.push({ key, profile });
+        } catch (e) {
+          // Skip invalid profiles
+        }
+      }
+    }
+    return profiles;
+  }
+
+  switchToProfile(profileKey) {
+    this.currentProfileKey = profileKey;
+    localStorage.setItem('currentProfileKey', profileKey);
+    this.userProfile = this.loadUserProfile();
+    this.dailyEntries = this.loadDailyEntries();
+    this.dailyNotes = this.loadDailyNotes();
+    this.targetCalories = this.userProfile.targetCalories || 0;
+    this.updateUI();
+  }
+
   // Setup form handling
   handleSetupSubmit(e) {
     e.preventDefault();
@@ -159,6 +215,18 @@ class CalorieTracker {
       timeGoal: document.getElementById('timeGoal').value,
       activityLevel: parseFloat(document.getElementById('activityLevel').value)
     };
+
+    // Generate profile key and check for existing profile
+    const profileKey = this.generateProfileKey(formData);
+    const existingProfile = this.findExistingProfile(profileKey);
+    
+    if (existingProfile) {
+      // Load existing profile
+      this.switchToProfile(profileKey);
+      this.showNotification(`Welcome back, ${existingProfile.name}!`);
+      this.showPage('trackerPage');
+      return;
+    }
 
     // Calculate BMR and daily calories
     const bmr = this.calculateBMR(formData);
@@ -204,10 +272,19 @@ class CalorieTracker {
     formData.dailyCalories = dailyCalories;
     formData.targetCalories = Math.round(targetCalories);
     formData.dailyCalorieAdjustment = Math.round(dailyCalorieAdjustment);
+    formData.createdAt = new Date().toISOString();
     
+    // Save new profile
+    this.currentProfileKey = profileKey;
+    localStorage.setItem('currentProfileKey', profileKey);
     this.userProfile = formData;
     this.targetCalories = formData.targetCalories;
     this.saveUserProfile();
+    
+    // Initialize empty data for new profile
+    this.dailyEntries = [];
+    this.dailyNotes = '';
+    this.saveDailyEntries();
     
     this.showNotification(translationManager.translate('goal_calculated'));
     this.showPage('trackerPage');
@@ -829,15 +906,17 @@ class CalorieTracker {
   // Notes management
   saveNotes() {
     const notesTextarea = document.getElementById('dailyNotes');
-    if (notesTextarea) {
+    if (notesTextarea && this.currentProfileKey) {
       this.dailyNotes = notesTextarea.value;
-      localStorage.setItem('dailyNotes_' + this.getTodayKey(), this.dailyNotes);
+      const key = `${this.currentProfileKey}_notes_${this.getTodayKey()}`;
+      localStorage.setItem(key, this.dailyNotes);
       
-      // Also save to notes history
+      // Also save to profile-specific notes history
       const today = this.getTodayKey();
-      let notesHistory = JSON.parse(localStorage.getItem('notesHistory')) || {};
+      const historyKey = `${this.currentProfileKey}_notesHistory`;
+      let notesHistory = JSON.parse(localStorage.getItem(historyKey)) || {};
       notesHistory[today] = this.dailyNotes;
-      localStorage.setItem('notesHistory', JSON.stringify(notesHistory));
+      localStorage.setItem(historyKey, JSON.stringify(notesHistory));
       
       this.showNotification(translationManager.translate('notes_saved'));
       
@@ -849,7 +928,10 @@ class CalorieTracker {
 
   // Show notes history
   showNotesHistory() {
-    const notesHistory = JSON.parse(localStorage.getItem('notesHistory')) || {};
+    if (!this.currentProfileKey) return;
+    
+    const historyKey = `${this.currentProfileKey}_notesHistory`;
+    const notesHistory = JSON.parse(localStorage.getItem(historyKey)) || {};
     
     // Get all unique dates from both notes and food entries
     const allDates = new Set();
@@ -860,7 +942,8 @@ class CalorieTracker {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateKey = date.toISOString().split('T')[0];
-      const foodEntries = localStorage.getItem('dailyEntries_' + dateKey);
+      const entriesKey = `${this.currentProfileKey}_entries_${dateKey}`;
+      const foodEntries = localStorage.getItem(entriesKey);
       if (foodEntries && JSON.parse(foodEntries).length > 0) {
         allDates.add(dateKey);
       }
@@ -880,7 +963,8 @@ class CalorieTracker {
       historyEntries.forEach(date => {
         const formattedDate = new Date(date).toLocaleDateString();
         const notes = notesHistory[date] || '';
-        const foodEntries = JSON.parse(localStorage.getItem('dailyEntries_' + date) || '[]');
+        const entriesKey = `${this.currentProfileKey}_entries_${date}`;
+        const foodEntries = JSON.parse(localStorage.getItem(entriesKey) || '[]');
         
         historyHtml += `<div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--border-radius);">`;
         historyHtml += `<strong style="font-size: 1.1rem; color: var(--primary-color);">${formattedDate}</strong><br>`;
@@ -924,25 +1008,41 @@ class CalorieTracker {
 
   // Data persistence
   saveUserProfile() {
-    localStorage.setItem('userProfile', JSON.stringify(this.userProfile));
+    if (this.currentProfileKey) {
+      localStorage.setItem(this.currentProfileKey, JSON.stringify(this.userProfile));
+    }
   }
 
   loadUserProfile() {
-    const saved = localStorage.getItem('userProfile');
-    return saved ? JSON.parse(saved) : {};
+    if (this.currentProfileKey) {
+      const saved = localStorage.getItem(this.currentProfileKey);
+      return saved ? JSON.parse(saved) : {};
+    }
+    return {};
   }
 
   saveDailyEntries() {
-    localStorage.setItem('dailyEntries_' + this.getTodayKey(), JSON.stringify(this.dailyEntries));
+    if (this.currentProfileKey) {
+      const key = `${this.currentProfileKey}_entries_${this.getTodayKey()}`;
+      localStorage.setItem(key, JSON.stringify(this.dailyEntries));
+    }
   }
 
   loadDailyEntries() {
-    const saved = localStorage.getItem('dailyEntries_' + this.getTodayKey());
-    return saved ? JSON.parse(saved) : [];
+    if (this.currentProfileKey) {
+      const key = `${this.currentProfileKey}_entries_${this.getTodayKey()}`;
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
   }
 
   loadDailyNotes() {
-    return localStorage.getItem('dailyNotes_' + this.getTodayKey()) || '';
+    if (this.currentProfileKey) {
+      const key = `${this.currentProfileKey}_notes_${this.getTodayKey()}`;
+      return localStorage.getItem(key) || '';
+    }
+    return '';
   }
 
   getTodayKey() {
