@@ -16,12 +16,15 @@ class CalorieTracker {
     this.initializeTheme();
     this.updateFoodCategoryOptions();
     this.updateLanguage();
-    this.updateUI();
     this.displayExistingProfiles();
     
-    // Show tracker page if user profile exists
+    // Show tracker page if user profile exists and has calculated goals
     if (this.userProfile.targetCalories) {
+      this.updateUI();
       this.showPage('trackerPage');
+    } else {
+      // Stay on setup page and don't update UI with empty data
+      this.showPage('setupPage');
     }
   }
 
@@ -565,10 +568,10 @@ class CalorieTracker {
 
     // Check if goals have been calculated
     if (!this.userProfile || !this.userProfile.targetCalories) {
-      // Show "0" for all values when no goals calculated
-      targetCaloriesEl.textContent = '0';
-      consumedCaloriesEl.textContent = '0';
-      remainingCaloriesEl.textContent = '0';
+      // Show placeholder text when no goals calculated
+      targetCaloriesEl.textContent = '--';
+      consumedCaloriesEl.textContent = '--';
+      remainingCaloriesEl.textContent = '--';
       
       if (progressFill) {
         progressFill.style.width = '0%';
@@ -576,7 +579,7 @@ class CalorieTracker {
       }
       
       if (progressText) {
-        progressText.textContent = '0%';
+        progressText.textContent = '--';
       }
       return;
     }
@@ -1153,8 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize the app after splash screen is hidden
     window.calorieTracker = new CalorieTracker();
-    // Ensure we land on setup page
-    window.calorieTracker.showPage('setupPage');
+    // The init() method will handle page navigation based on profile state
   }, 2500); // Show splash for 2.5 seconds
 });
 
