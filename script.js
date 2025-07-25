@@ -1313,14 +1313,18 @@ class CalorieTracker {
       position: fixed;
       top: 20px;
       right: 20px;
-      background-color: var(--success-color);
+      background-color: #10b981;
       color: white;
       padding: 1rem 1.5rem;
-      border-radius: var(--border-radius);
-      box-shadow: var(--shadow-lg);
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
       z-index: 1000;
       transform: translateX(100%);
       transition: transform 0.3s ease;
+      font-family: inherit;
+      font-size: 0.875rem;
+      max-width: 300px;
+      word-wrap: break-word;
     `;
     
     document.body.appendChild(notification);
