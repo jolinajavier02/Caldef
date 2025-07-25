@@ -510,6 +510,7 @@ class CalorieTracker {
         // Profile already has calculated goals, just switch to it
         this.switchToProfile(this.currentProfileKey);
         this.showNotification(`Welcome back, ${existingProfile.name}!`);
+        this.showPage('trackerPage');
         return;
       }
     }
