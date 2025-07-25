@@ -45,6 +45,13 @@ class CalorieTracker {
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', (e) => {
         const page = e.currentTarget.getAttribute('data-page');
+        
+        // Prevent direct access to tracker page if setup is not completed
+        if (page === 'trackerPage' && (!this.userProfile || !this.userProfile.targetCalories)) {
+          this.showNotification('Need to setup the profile first.');
+          return;
+        }
+        
         this.showPage(page);
       });
     });
@@ -147,12 +154,26 @@ class CalorieTracker {
       // Check if we have a valid profile with calculated goals
       if (!this.userProfile || !this.userProfile.targetCalories) {
         // No valid profile, redirect to setup
-        this.showNotification('Please complete your profile setup first.');
+        this.showNotification('Need to setup the profile first.');
         pageId = 'setupPage';
       } else if (!this.currentProfileKey) {
         // Profile exists but no current key, create a temporary one
         this.currentProfileKey = this.generateProfileKey(this.userProfile);
         localStorage.setItem('currentProfileKey', this.currentProfileKey);
+      }
+      
+      // Clear activity data when navigating to tracker page
+      if (pageId === 'trackerPage') {
+        this.dailyEntries = [];
+        this.dailyNotes = '';
+        this.saveDailyEntries();
+        this.saveDailyNotes();
+        
+        // Clear the notes textarea
+        const dailyNotesTextarea = document.getElementById('dailyNotes');
+        if (dailyNotesTextarea) {
+          dailyNotesTextarea.value = '';
+        }
       }
     }
 
@@ -509,7 +530,7 @@ class CalorieTracker {
       if (existingProfile && existingProfile.targetCalories) {
         // Profile already has calculated goals, just switch to it
         this.switchToProfile(this.currentProfileKey);
-        this.showNotification(`Welcome back, ${existingProfile.name}!`);
+        this.showNotification('Welcome back!');
         this.showPage('trackerPage');
         return;
       }
@@ -522,7 +543,7 @@ class CalorieTracker {
     if (existingProfile && existingProfile.targetCalories) {
       // Load existing profile with calculated goals
       this.switchToProfile(profileKey);
-      this.showNotification(`Welcome back, ${existingProfile.name}!`);
+      this.showNotification('Welcome back!');
       this.showPage('trackerPage');
       return;
     }
