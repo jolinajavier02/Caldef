@@ -18,6 +18,18 @@ class CalorieTracker {
     this.updateLanguage();
     this.displayExistingProfiles();
     
+    // Load daily data if profile exists
+    if (this.currentProfileKey) {
+      this.dailyEntries = this.loadDailyEntries();
+      this.dailyNotes = this.loadDailyNotes();
+      
+      // Load notes into textarea
+      const dailyNotesTextarea = document.getElementById('dailyNotes');
+      if (dailyNotesTextarea) {
+        dailyNotesTextarea.value = this.dailyNotes;
+      }
+    }
+    
     // Show tracker page if user profile exists and has calculated goals
     if (this.userProfile.targetCalories) {
       this.updateUI();
@@ -109,10 +121,41 @@ class CalorieTracker {
     if (createNewProfileBtn) {
       createNewProfileBtn.addEventListener('click', () => this.handleCreateNewProfile());
     }
+
+    // Name autocomplete functionality
+    const nameInput = document.getElementById('userName');
+    if (nameInput) {
+      nameInput.addEventListener('input', (e) => this.handleNameInput(e));
+      nameInput.addEventListener('focus', (e) => this.handleNameInput(e));
+      nameInput.addEventListener('blur', (e) => this.handleNameBlur(e));
+      nameInput.addEventListener('keydown', (e) => this.handleNameKeydown(e));
+    }
+
+    // Click outside to close autocomplete
+    document.addEventListener('click', (e) => {
+      const autocompleteContainer = document.querySelector('.autocomplete-container');
+      if (autocompleteContainer && !autocompleteContainer.contains(e.target)) {
+        this.hideAutocomplete();
+      }
+    });
   }
 
   // Page navigation
   showPage(pageId) {
+    // Special handling for tracker page
+    if (pageId === 'trackerPage') {
+      // Check if we have a valid profile with calculated goals
+      if (!this.userProfile || !this.userProfile.targetCalories) {
+        // No valid profile, redirect to setup
+        this.showNotification('Please complete your profile setup first.');
+        pageId = 'setupPage';
+      } else if (!this.currentProfileKey) {
+        // Profile exists but no current key, create a temporary one
+        this.currentProfileKey = this.generateProfileKey(this.userProfile);
+        localStorage.setItem('currentProfileKey', this.currentProfileKey);
+      }
+    }
+
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
       page.classList.remove('active');
@@ -213,6 +256,12 @@ class CalorieTracker {
     this.dailyNotes = this.loadDailyNotes();
     this.targetCalories = this.userProfile.targetCalories || 0;
     
+    // Load notes into textarea
+    const dailyNotesTextarea = document.getElementById('dailyNotes');
+    if (dailyNotesTextarea) {
+      dailyNotesTextarea.value = this.dailyNotes;
+    }
+    
     // Ensure UI updates with the loaded profile data
     this.updateUI();
     
@@ -273,6 +322,170 @@ class CalorieTracker {
     document.getElementById('setupForm').scrollIntoView({ behavior: 'smooth' });
   }
 
+  // Autocomplete functionality
+  handleNameInput(e) {
+    const query = e.target.value.trim();
+    if (query.length === 0) {
+      this.hideAutocomplete();
+      this.clearForm();
+      return;
+    }
+
+    const profiles = this.getAllProfiles();
+    const matchingProfiles = profiles.filter(({ profile }) => 
+      profile.name.toLowerCase().includes(query.toLowerCase())
+    );
+
+    if (matchingProfiles.length > 0) {
+      this.showAutocomplete(matchingProfiles, query);
+    } else {
+      this.hideAutocomplete();
+    }
+  }
+
+  handleNameBlur(e) {
+    // Delay hiding to allow clicking on autocomplete items
+    setTimeout(() => {
+      this.hideAutocomplete();
+    }, 150);
+  }
+
+  handleNameKeydown(e) {
+    const dropdown = document.getElementById('nameAutocomplete');
+    if (!dropdown || dropdown.style.display === 'none') return;
+
+    const items = dropdown.querySelectorAll('.autocomplete-item');
+    let currentIndex = Array.from(items).findIndex(item => item.classList.contains('highlighted'));
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        currentIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        this.highlightAutocompleteItem(items, currentIndex);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        currentIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        this.highlightAutocompleteItem(items, currentIndex);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (currentIndex >= 0 && items[currentIndex]) {
+          const profileKey = items[currentIndex].dataset.profileKey;
+          this.selectProfile(profileKey);
+        }
+        break;
+      case 'Escape':
+        this.hideAutocomplete();
+        break;
+    }
+  }
+
+  showAutocomplete(profiles, query) {
+    const dropdown = document.getElementById('nameAutocomplete');
+    if (!dropdown) return;
+
+    dropdown.innerHTML = '';
+    
+    profiles.forEach(({ key, profile }) => {
+      const item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      item.dataset.profileKey = key;
+      
+      // Highlight matching text
+      const nameHtml = this.highlightText(profile.name, query);
+      
+      item.innerHTML = `
+        <div class="profile-name">${nameHtml}</div>
+        <div class="profile-details">${profile.age} years, ${profile.height}${profile.heightUnit}, ${profile.currentWeight}${profile.weightUnit}</div>
+      `;
+      
+      item.addEventListener('click', () => {
+        this.selectProfile(key);
+      });
+      
+      dropdown.appendChild(item);
+    });
+    
+    dropdown.style.display = 'block';
+  }
+
+  hideAutocomplete() {
+    const dropdown = document.getElementById('nameAutocomplete');
+    if (dropdown) {
+      dropdown.style.display = 'none';
+    }
+  }
+
+  highlightAutocompleteItem(items, index) {
+    items.forEach((item, i) => {
+      item.classList.toggle('highlighted', i === index);
+    });
+  }
+
+  highlightText(text, query) {
+    if (!query) return text;
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<strong>$1</strong>');
+  }
+
+  selectProfile(profileKey) {
+    const profile = this.findExistingProfile(profileKey);
+    if (!profile) return;
+
+    // Set the current profile key
+    this.currentProfileKey = profileKey;
+    localStorage.setItem('currentProfileKey', profileKey);
+
+    // Fill form with profile data
+    this.fillFormWithProfile(profile);
+    
+    // Hide autocomplete
+    this.hideAutocomplete();
+    
+    // Show notification
+    this.showNotification(`Profile loaded: ${profile.name}`);
+  }
+
+  fillFormWithProfile(profile) {
+    // Fill all form fields with profile data
+    document.getElementById('userName').value = profile.name || '';
+    document.getElementById('gender').value = profile.gender || '';
+    document.getElementById('age').value = profile.age || '';
+    document.getElementById('height').value = profile.height || '';
+    document.getElementById('heightUnit').value = profile.heightUnit || 'cm';
+    document.getElementById('currentWeight').value = profile.currentWeight || '';
+    document.getElementById('weightUnit').value = profile.weightUnit || 'kg';
+    document.getElementById('targetWeight').value = profile.targetWeight || '';
+    document.getElementById('timeGoal').value = profile.timeGoal || '';
+    document.getElementById('activityLevel').value = profile.activityLevel || '';
+    
+    // Update target weight unit display
+    const targetWeightUnit = document.getElementById('targetWeightUnit');
+    if (targetWeightUnit) {
+      targetWeightUnit.textContent = profile.weightUnit || 'kg';
+    }
+  }
+
+  clearForm() {
+    // Clear form fields when starting fresh
+    const formFields = ['gender', 'age', 'height', 'heightUnit', 'currentWeight', 'weightUnit', 'targetWeight', 'timeGoal', 'activityLevel'];
+    formFields.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        if (field.tagName === 'SELECT') {
+          field.selectedIndex = 0;
+        } else {
+          field.value = '';
+        }
+      }
+    });
+    
+    // Reset current profile
+    this.currentProfileKey = null;
+    localStorage.removeItem('currentProfileKey');
+  }
+
   // Setup form handling
   handleSetupSubmit(e) {
     e.preventDefault();
@@ -290,12 +503,23 @@ class CalorieTracker {
       activityLevel: parseFloat(document.getElementById('activityLevel').value)
     };
 
+    // Check if we already have a current profile loaded (from autocomplete)
+    if (this.currentProfileKey) {
+      const existingProfile = this.findExistingProfile(this.currentProfileKey);
+      if (existingProfile && existingProfile.targetCalories) {
+        // Profile already has calculated goals, just switch to it
+        this.switchToProfile(this.currentProfileKey);
+        this.showNotification(`Welcome back, ${existingProfile.name}!`);
+        return;
+      }
+    }
+
     // Generate profile key and check for existing profile
     const profileKey = this.generateProfileKey(formData);
     const existingProfile = this.findExistingProfile(profileKey);
     
-    if (existingProfile) {
-      // Load existing profile
+    if (existingProfile && existingProfile.targetCalories) {
+      // Load existing profile with calculated goals
       this.switchToProfile(profileKey);
       this.showNotification(`Welcome back, ${existingProfile.name}!`);
       this.showPage('trackerPage');
@@ -898,25 +1122,34 @@ class CalorieTracker {
   // Notes management
   saveNotes() {
     const notesTextarea = document.getElementById('dailyNotes');
-    if (notesTextarea && this.currentProfileKey) {
-      this.dailyNotes = notesTextarea.value;
-      const key = `${this.currentProfileKey}_notes_${this.getTodayKey()}`;
-      localStorage.setItem(key, this.dailyNotes);
-      
-      // Also save to history
-      this.saveDailyHistory();
-      
-      this.showNotification(translationManager.translate('notes_saved'));
-      
-      // Reset the input field to placeholder text
-      notesTextarea.value = '';
-      notesTextarea.placeholder = translationManager.translate('notes_placeholder');
+    if (!notesTextarea) return;
+    
+    // Ensure we have a current profile key
+    if (!this.currentProfileKey) {
+      this.showNotification('Please set up your profile first.');
+      return;
     }
+    
+    this.dailyNotes = notesTextarea.value;
+    const key = `${this.currentProfileKey}_notes_${this.getTodayKey()}`;
+    localStorage.setItem(key, this.dailyNotes);
+    
+    // Also save to history
+    this.saveDailyHistory();
+    
+    this.showNotification(translationManager.translate('notes_saved'));
+    
+    // Reset the input field to placeholder text
+    notesTextarea.value = '';
+    notesTextarea.placeholder = translationManager.translate('notes_placeholder');
   }
 
   // Show notes history
   showNotesHistory() {
-    if (!this.currentProfileKey) return;
+    if (!this.currentProfileKey) {
+      this.showNotification('Please set up your profile first.');
+      return;
+    }
     
     // Get unified history
     const history = this.loadDailyHistory();
