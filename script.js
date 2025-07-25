@@ -149,14 +149,20 @@ class CalorieTracker {
 
   // Page navigation
   showPage(pageId) {
+    console.log('showPage called with:', pageId);
+    console.log('Current userProfile:', this.userProfile);
+    
     // Special handling for tracker page
     if (pageId === 'trackerPage') {
+      console.log('Handling tracker page navigation');
       // Check if we have a valid profile with calculated goals
       if (!this.userProfile || !this.userProfile.targetCalories) {
+        console.log('Profile incomplete, redirecting to setup');
         // No valid profile, redirect to setup
         this.showNotification('Need to setup the profile first.');
         pageId = 'setupPage';
       } else if (!this.currentProfileKey) {
+        console.log('Creating temporary profile key');
         // Profile exists but no current key, create a temporary one
         this.currentProfileKey = this.generateProfileKey(this.userProfile);
         localStorage.setItem('currentProfileKey', this.currentProfileKey);
@@ -164,6 +170,7 @@ class CalorieTracker {
       
       // Clear activity data when navigating to tracker page
       if (pageId === 'trackerPage') {
+        console.log('Clearing daily data for tracker page');
         this.dailyEntries = [];
         this.dailyNotes = '';
         this.saveDailyEntries();
@@ -510,6 +517,7 @@ class CalorieTracker {
   // Setup form handling
   handleSetupSubmit(e) {
     e.preventDefault();
+    console.log('Form submitted - handleSetupSubmit called');
     
     const formData = {
       name: document.getElementById('userName').value,
@@ -523,6 +531,8 @@ class CalorieTracker {
       timeGoal: document.getElementById('timeGoal').value,
       activityLevel: parseFloat(document.getElementById('activityLevel').value)
     };
+    
+    console.log('Form data:', formData);
 
     // Check if we already have a current profile loaded (from autocomplete)
     if (this.currentProfileKey) {
@@ -606,9 +616,13 @@ class CalorieTracker {
     this.dailyNotes = '';
     this.saveDailyEntries();
     
+    console.log('About to show notification and navigate to tracker page');
     this.showNotification(translationManager.translate('goal_calculated'));
+    console.log('Calling showPage with trackerPage');
     this.showPage('trackerPage');
+    console.log('Calling updateUI');
     this.updateUI();
+    console.log('handleSetupSubmit completed successfully');
   }
 
   // BMR calculation using Mifflin-St Jeor equation
@@ -1419,15 +1433,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 2500); // Show splash for 2.5 seconds
 });
 
-// Service Worker registration for PWA capabilities (optional)
+// Clean up any existing service worker registrations
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('SW registered: ', registration);
-      })
-      .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
-      });
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister();
+    }
   });
 }
