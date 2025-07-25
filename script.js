@@ -155,6 +155,7 @@ class CalorieTracker {
       currentWeight: parseFloat(document.getElementById('currentWeight').value),
       weightUnit: document.getElementById('weightUnit').value,
       targetWeight: parseFloat(document.getElementById('targetWeight').value),
+      timeGoal: parseInt(document.getElementById('timeGoal').value),
       activityLevel: parseFloat(document.getElementById('activityLevel').value)
     };
 
@@ -162,24 +163,45 @@ class CalorieTracker {
     const bmr = this.calculateBMR(formData);
     const dailyCalories = Math.round(bmr * formData.activityLevel);
     
-    // Adjust for weight goal (deficit/surplus)
+    // Adjust for weight goal based on user's selected timeline
     const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
     const targetWeightKg = this.convertToKg(formData.targetWeight, formData.weightUnit);
-    const weightDifference = targetWeightKg - currentWeightKg;
+    const weightDifference = Math.abs(targetWeightKg - currentWeightKg);
+    const isWeightLoss = currentWeightKg > targetWeightKg;
     
-    // Adjust calories based on goal (roughly 500 cal deficit/surplus per 0.5kg per week)
+    // Calculate required daily calorie deficit/surplus based on timeline
+    // 1 kg of fat = approximately 7700 calories
+    const totalCaloriesNeeded = weightDifference * 7700;
+    const daysToTarget = formData.timeGoal * 7; // Convert weeks to days
+    const dailyCalorieAdjustment = totalCaloriesNeeded / daysToTarget;
+    
     let targetCalories = dailyCalories;
-    if (weightDifference < 0) {
+    if (isWeightLoss) {
       // Weight loss: create deficit
-      targetCalories = dailyCalories - 500;
+      targetCalories = dailyCalories - dailyCalorieAdjustment;
+      // Ensure minimum safe calories (1200 for women, 1500 for men)
+      const minCalories = formData.gender === 'female' ? 1200 : 1500;
+      targetCalories = Math.max(targetCalories, minCalories);
+      
+      // If the required deficit is too extreme, recommend higher activity level
+      if (dailyCalorieAdjustment > 1000) {
+        // Suggest very active lifestyle for aggressive goals
+        const recommendedActivity = 1.725;
+        const newDailyCalories = Math.round(bmr * recommendedActivity);
+        targetCalories = Math.max(newDailyCalories - dailyCalorieAdjustment, minCalories);
+        formData.recommendedActivity = recommendedActivity;
+      }
     } else if (weightDifference > 0) {
       // Weight gain: create surplus
-      targetCalories = dailyCalories + 300;
+      targetCalories = dailyCalories + dailyCalorieAdjustment;
+      // Cap maximum surplus at 1000 calories for safety
+      targetCalories = Math.min(targetCalories, dailyCalories + 1000);
     }
 
     formData.bmr = bmr;
     formData.dailyCalories = dailyCalories;
-    formData.targetCalories = Math.max(targetCalories, 1200); // Minimum safe calories
+    formData.targetCalories = Math.round(targetCalories);
+    formData.dailyCalorieAdjustment = Math.round(dailyCalorieAdjustment);
     
     this.userProfile = formData;
     this.targetCalories = formData.targetCalories;
@@ -500,14 +522,29 @@ class CalorieTracker {
       const targetWeight = this.userProfile.targetWeight;
       const weightDifference = Math.abs(currentWeight - targetWeight);
       
-      // Calculate timeline based on actual calorie deficit/surplus
-      const dailyCalorieDeficit = Math.abs(this.userProfile.dailyCalories - this.userProfile.targetCalories);
-      const weeklyCalorieDeficit = dailyCalorieDeficit * 7;
-      
-      // 1 kg of fat = approximately 7700 calories
-      const weeksToTarget = Math.max(1, Math.ceil((weightDifference * 7700) / weeklyCalorieDeficit));
-      const monthsToTarget = Math.max(1, Math.ceil(weeksToTarget / 4.33)); // 4.33 weeks per month
-      const maxMonths = Math.min(monthsToTarget, 18); // Cap at 18 months for display
+      // Use user's selected timeGoal if available, otherwise calculate based on calorie deficit
+      let maxMonths;
+      if (this.userProfile.timeGoal) {
+        // Convert timeGoal to months
+        const timeGoalMap = {
+          '2weeks': 0.5,
+          '1month': 1,
+          '2months': 2,
+          '3months': 3,
+          '6months': 6,
+          '1year': 12
+        };
+        maxMonths = timeGoalMap[this.userProfile.timeGoal] || 6; // Default to 6 months if not found
+      } else {
+        // Fallback to automatic calculation
+        const dailyCalorieDeficit = Math.abs(this.userProfile.dailyCalories - this.userProfile.targetCalories);
+        const weeklyCalorieDeficit = dailyCalorieDeficit * 7;
+        
+        // 1 kg of fat = approximately 7700 calories
+        const weeksToTarget = Math.max(1, Math.ceil((weightDifference * 7700) / weeklyCalorieDeficit));
+        const monthsToTarget = Math.max(1, Math.ceil(weeksToTarget / 4.33)); // 4.33 weeks per month
+        maxMonths = Math.min(monthsToTarget, 18); // Cap at 18 months for display
+      }
       
       // Generate monthly progression data
       const monthlyData = [];
@@ -603,7 +640,25 @@ class CalorieTracker {
       ctx.textAlign = 'center';
       ctx.font = 'bold 14px Inter, sans-serif';
       const goalType = currentWeight > targetWeight ? 'Weight Loss' : 'Weight Gain';
-      ctx.fillText(`${maxMonths}-Month ${goalType} Journey`, width / 2, 25);
+      
+      // Create appropriate title based on timeGoal
+      let titleText;
+      if (this.userProfile.timeGoal) {
+        const timeGoalTitles = {
+          '2weeks': '2-Week',
+          '1month': '1-Month',
+          '2months': '2-Month',
+          '3months': '3-Month',
+          '6months': '6-Month',
+          '1year': '1-Year'
+        };
+        const timeTitle = timeGoalTitles[this.userProfile.timeGoal] || `${maxMonths}-Month`;
+        titleText = `${timeTitle} ${goalType} Journey`;
+      } else {
+        titleText = `${maxMonths}-Month ${goalType} Journey`;
+      }
+      
+      ctx.fillText(titleText, width / 2, 25);
       
     } else {
       // Fallback to original chart if no profile data
