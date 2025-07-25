@@ -17,6 +17,7 @@ class CalorieTracker {
     this.updateFoodCategoryOptions();
     this.updateLanguage();
     this.updateUI();
+    this.displayExistingProfiles();
     
     // Show tracker page if user profile exists
     if (this.userProfile.targetCalories) {

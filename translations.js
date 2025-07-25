@@ -91,7 +91,12 @@ const translations = {
     goal_calculated: "Your daily calorie goal has been calculated!",
     entry_added: "Food entry added successfully!",
     entry_deleted: "Food entry deleted!",
-    notes_saved: "Notes saved successfully!"
+    notes_saved: "Notes saved successfully!",
+    profile_management: "Profile Management",
+    existing_profiles: "Existing Profiles:",
+    create_new_profile: "Create New Profile",
+    switch_profile: "Switch to this profile",
+    no_profiles_found: "No existing profiles found. Create your first profile below."
   },
   es: {
      app_title: "CalDef",
@@ -182,7 +187,12 @@ const translations = {
     goal_calculated: "¡Tu objetivo calórico diario ha sido calculado!",
     entry_added: "¡Entrada de comida agregada exitosamente!",
     entry_deleted: "¡Entrada de comida eliminada!",
-    notes_saved: "¡Notas guardadas exitosamente!"
+    notes_saved: "¡Notas guardadas exitosamente!",
+    profile_management: "Gestión de Perfiles",
+    existing_profiles: "Perfiles Existentes:",
+    create_new_profile: "Crear Nuevo Perfil",
+    switch_profile: "Cambiar a este perfil",
+    no_profiles_found: "No se encontraron perfiles existentes. Crea tu primer perfil a continuación."
   },
   ja: {
      app_title: "CalDef",
@@ -273,7 +283,12 @@ const translations = {
     goal_calculated: "1日のカロリー目標が計算されました！",
     entry_added: "食事エントリーが正常に追加されました！",
     entry_deleted: "食事エントリーが削除されました！",
-    notes_saved: "メモが正常に保存されました！"
+    notes_saved: "メモが正常に保存されました！",
+    profile_management: "プロフィール管理",
+    existing_profiles: "既存のプロフィール：",
+    create_new_profile: "新しいプロフィールを作成",
+    switch_profile: "このプロフィールに切り替え",
+    no_profiles_found: "既存のプロフィールが見つかりません。以下で最初のプロフィールを作成してください。"
   },
   fil: {
     app_title: "CalDef",
