@@ -249,12 +249,18 @@ class CalorieTracker {
   // Name autocomplete functionality
   handleNameInput(e) {
     const query = e.target.value.trim();
+    const nameHistory = this.getNameHistory();
+    
     if (query.length === 0) {
-      this.hideAutocomplete();
+      // Show all names when input is empty
+      if (nameHistory.length > 0) {
+        this.showAutocomplete(nameHistory, '');
+      } else {
+        this.hideAutocomplete();
+      }
       return;
     }
 
-    const nameHistory = this.getNameHistory();
     const matchingNames = nameHistory.filter(name => 
       name.toLowerCase().includes(query.toLowerCase())
     );
@@ -263,6 +269,24 @@ class CalorieTracker {
       this.showAutocomplete(matchingNames, query);
     } else {
       this.hideAutocomplete();
+    }
+  }
+
+  handleNameFocus(e) {
+    // Show all available names when focusing on the input
+    const nameHistory = this.getNameHistory();
+    if (nameHistory.length > 0) {
+      const query = e.target.value.trim();
+      if (query.length === 0) {
+        this.showAutocomplete(nameHistory, '');
+      } else {
+        const matchingNames = nameHistory.filter(name => 
+          name.toLowerCase().includes(query.toLowerCase())
+        );
+        if (matchingNames.length > 0) {
+          this.showAutocomplete(matchingNames, query);
+        }
+      }
     }
   }
 
