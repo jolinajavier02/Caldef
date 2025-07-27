@@ -29,14 +29,8 @@ class CalorieTracker {
       }
     }
     
-    // Show tracker page if user profile exists and has calculated goals
-    if (this.userProfile && this.userProfile.targetCalories) {
-      this.updateUI();
-      this.showPage('trackerPage');
-    } else {
-      // Stay on setup page and don't update UI with empty data
-      this.showPage('setupPage');
-    }
+    // Always start with setup page (blank first)
+    this.showPage('setupPage');
   }
 
   setupEventListeners() {
