@@ -716,10 +716,10 @@ class CalorieTracker {
 
     // Check if goals have been calculated
     if (!this.userProfile || !this.userProfile.targetCalories) {
-      // Show placeholder text when no goals calculated
-      targetCaloriesEl.textContent = '--';
-      consumedCaloriesEl.textContent = '--';
-      remainingCaloriesEl.textContent = '--';
+      // Show blank/0 when no profile setup
+      targetCaloriesEl.textContent = '0';
+      consumedCaloriesEl.textContent = '0';
+      remainingCaloriesEl.textContent = '0';
       
       if (progressFill) {
         progressFill.style.width = '0%';
@@ -727,7 +727,7 @@ class CalorieTracker {
       }
       
       if (progressText) {
-        progressText.textContent = '--';
+        progressText.textContent = '0%';
       }
       return;
     }
@@ -735,6 +735,23 @@ class CalorieTracker {
     const totalConsumed = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
     const remaining = this.targetCalories - totalConsumed;
     const percentage = Math.min((totalConsumed / this.targetCalories) * 100, 100);
+
+    // Show blank/0 when no activity (no daily entries)
+    if (this.dailyEntries.length === 0) {
+      targetCaloriesEl.textContent = '0';
+      consumedCaloriesEl.textContent = '0';
+      remainingCaloriesEl.textContent = '0';
+      
+      if (progressFill) {
+        progressFill.style.width = '0%';
+        progressFill.className = 'progress-fill';
+      }
+      
+      if (progressText) {
+        progressText.textContent = '0%';
+      }
+      return;
+    }
 
     targetCaloriesEl.textContent = this.targetCalories;
     consumedCaloriesEl.textContent = totalConsumed;
@@ -769,7 +786,21 @@ class CalorieTracker {
     if (!this.userProfile || !this.userProfile.targetCalories) {
       // Show placeholder and hide canvas when no goals calculated
       canvas.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
+      if (placeholder) {
+        placeholder.style.display = 'block';
+        placeholder.textContent = 'Set up your profile first to see weight progress';
+      }
+      return;
+    }
+    
+    // Check if there's any activity (daily entries)
+    if (this.dailyEntries.length === 0) {
+      // Show placeholder when no activity
+      canvas.style.display = 'none';
+      if (placeholder) {
+        placeholder.style.display = 'block';
+        placeholder.textContent = 'Start logging food to see your weight progress';
+      }
       return;
     }
     
@@ -789,7 +820,7 @@ class CalorieTracker {
       localStorage.setItem('weightHistory', JSON.stringify(weightHistory));
     }
     
-    // Show chart if we have user profile with calculated goals
+    // Show chart if we have user profile with calculated goals and activity
     if (this.userProfile && this.userProfile.currentWeight && this.userProfile.targetWeight) {
       // Show canvas and hide placeholder
       canvas.style.display = 'block';
@@ -799,7 +830,10 @@ class CalorieTracker {
     } else {
       // Show placeholder and hide canvas
       canvas.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
+      if (placeholder) {
+        placeholder.style.display = 'block';
+        placeholder.textContent = 'Your weight progress will be displayed here as you track your journey';
+      }
     }
   }
   
