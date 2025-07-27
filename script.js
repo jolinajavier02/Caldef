@@ -29,8 +29,18 @@ class CalorieTracker {
       }
     }
     
-    // Always start with setup page (blank first)
-    this.showPage('setupPage');
+    // Update navigation visibility based on profile status
+    this.updateNavigationVisibility();
+    
+    // Show appropriate page based on profile status
+    if (this.userProfile && this.userProfile.targetCalories) {
+      // User has a complete profile, show tracker page
+      this.showPage('trackerPage');
+      this.updateUI();
+    } else {
+      // No profile or incomplete profile, show setup page
+      this.showPage('setupPage');
+    }
   }
 
   setupEventListeners() {
@@ -41,6 +51,8 @@ class CalorieTracker {
         
         // Prevent direct access to tracker page if setup is not completed
         if (page === 'trackerPage' && (!this.userProfile || !this.userProfile.targetCalories)) {
+          e.preventDefault();
+          e.stopPropagation();
           this.showNotification('Need to setup the profile first.');
           return;
         }
@@ -48,6 +60,18 @@ class CalorieTracker {
         this.showPage(page);
       });
     });
+    
+    // Special handler for disabled tracker button
+    const trackerNavItem = document.getElementById('navTracker');
+    if (trackerNavItem) {
+      trackerNavItem.addEventListener('click', (e) => {
+        if (trackerNavItem.classList.contains('disabled')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.showNotification('Need to setup the profile first.');
+        }
+      }, true); // Use capture phase to ensure it fires even with pointer-events: none
+    }
 
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -132,6 +156,24 @@ class CalorieTracker {
         this.hideAutocomplete();
       }
     });
+  }
+
+  // Update navigation visibility based on profile status
+  updateNavigationVisibility() {
+    const trackerNavItem = document.getElementById('navTracker');
+    if (trackerNavItem) {
+      if (!this.userProfile || !this.userProfile.targetCalories) {
+        // Make tracker navigation non-clickable and visually disabled
+        trackerNavItem.style.opacity = '0.5';
+        trackerNavItem.style.pointerEvents = 'none';
+        trackerNavItem.classList.add('disabled');
+      } else {
+        // Enable tracker navigation when profile is complete
+        trackerNavItem.style.opacity = '1';
+        trackerNavItem.style.pointerEvents = 'auto';
+        trackerNavItem.classList.remove('disabled');
+      }
+    }
   }
 
   // Page navigation
@@ -389,6 +431,9 @@ class CalorieTracker {
       this.dailyEntries = this.loadDailyEntries();
       this.dailyNotes = this.loadDailyNotes();
       
+      // Update navigation visibility since we now have a profile
+      this.updateNavigationVisibility();
+      
       // Navigate to tracker page and update UI
       this.showPage('trackerPage');
       this.updateUI();
@@ -505,6 +550,10 @@ class CalorieTracker {
     this.saveDailyEntries();
     
     console.log('About to show notification and navigate to tracker page');
+    
+    // Update navigation visibility before showing tracker page
+    this.updateNavigationVisibility();
+    
     this.showNotification(translationManager.translate('goal_calculated'));
     console.log('Calling showPage with trackerPage');
     this.showPage('trackerPage');

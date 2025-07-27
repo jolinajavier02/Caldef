@@ -913,6 +913,12 @@ body {
   font-size: 0.75rem;
 }
 
+.nav-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .nav-item.active {
   color: var(--primary-color);
 }
