@@ -375,6 +375,47 @@ class CalorieTracker {
     
     // Hide autocomplete
     this.hideAutocomplete();
+    
+    // Check if a profile exists for this name
+    const existingProfile = this.findProfileByName(name);
+    if (existingProfile) {
+      // Load the existing profile
+      this.currentProfileKey = existingProfile.key;
+      localStorage.setItem('currentProfileKey', this.currentProfileKey);
+      this.userProfile = existingProfile.profile;
+      this.targetCalories = this.userProfile.targetCalories || 0;
+      
+      // Load daily data for this profile
+      this.dailyEntries = this.loadDailyEntries();
+      this.dailyNotes = this.loadDailyNotes();
+      
+      // Navigate to tracker page and update UI
+      this.showPage('trackerPage');
+      this.updateUI();
+      
+      this.showNotification(`Welcome back, ${name}!`);
+    }
+  }
+  
+  // Find existing profile by name
+  findProfileByName(name) {
+    const nameKey = name.toLowerCase().trim().replace(/\s+/g, '_');
+    
+    // Search through all localStorage keys for profiles with this name
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('profile_' + nameKey + '_')) {
+        try {
+          const profile = JSON.parse(localStorage.getItem(key));
+          if (profile && profile.name && profile.targetCalories) {
+            return { key, profile };
+          }
+        } catch (e) {
+          // Skip invalid JSON
+        }
+      }
+    }
+    return null;
   }
 
 
