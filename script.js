@@ -19,6 +19,9 @@ class CalorieTracker {
     
     // Load daily data if profile exists
     if (this.currentProfileKey) {
+      // Check for day rollover before loading data
+      this.checkDayRollover();
+      
       this.dailyEntries = this.loadDailyEntries();
       this.dailyNotes = this.loadDailyNotes();
       
@@ -49,8 +52,8 @@ class CalorieTracker {
       item.addEventListener('click', (e) => {
         const page = e.currentTarget.getAttribute('data-page');
         
-        // Prevent direct access to tracker page if setup is not completed
-        if (page === 'trackerPage' && (!this.userProfile || !this.userProfile.targetCalories)) {
+        // Prevent direct access to tracker and history pages if setup is not completed
+        if ((page === 'trackerPage' || page === 'historyPage') && (!this.userProfile || !this.userProfile.targetCalories)) {
           e.preventDefault();
           e.stopPropagation();
           this.showNotification('Need to setup the profile first.');
@@ -149,6 +152,16 @@ class CalorieTracker {
       nameInput.addEventListener('keydown', (e) => this.handleNameKeydown(e));
     }
 
+    // History period selection
+    const historyPeriod = document.getElementById('historyPeriod');
+    if (historyPeriod) {
+      historyPeriod.addEventListener('change', () => {
+        if (this.currentPage === 'historyPage') {
+          this.updateHistoryPage();
+        }
+      });
+    }
+
     // Click outside to close autocomplete
     document.addEventListener('click', (e) => {
       const autocompleteContainer = document.querySelector('.autocomplete-container');
@@ -161,17 +174,33 @@ class CalorieTracker {
   // Update navigation visibility based on profile status
   updateNavigationVisibility() {
     const trackerNavItem = document.getElementById('navTracker');
+    const historyNavItem = document.getElementById('navHistory');
+    
+    const isProfileComplete = this.userProfile && this.userProfile.targetCalories;
+    
+    // Handle tracker navigation
     if (trackerNavItem) {
-      if (!this.userProfile || !this.userProfile.targetCalories) {
-        // Make tracker navigation non-clickable and visually disabled
+      if (!isProfileComplete) {
         trackerNavItem.style.opacity = '0.5';
         trackerNavItem.style.pointerEvents = 'none';
         trackerNavItem.classList.add('disabled');
       } else {
-        // Enable tracker navigation when profile is complete
         trackerNavItem.style.opacity = '1';
         trackerNavItem.style.pointerEvents = 'auto';
         trackerNavItem.classList.remove('disabled');
+      }
+    }
+    
+    // Handle history navigation
+    if (historyNavItem) {
+      if (!isProfileComplete) {
+        historyNavItem.style.opacity = '0.5';
+        historyNavItem.style.pointerEvents = 'none';
+        historyNavItem.classList.add('disabled');
+      } else {
+        historyNavItem.style.opacity = '1';
+        historyNavItem.style.pointerEvents = 'auto';
+        historyNavItem.classList.remove('disabled');
       }
     }
   }
@@ -181,7 +210,7 @@ class CalorieTracker {
     console.log('showPage called with:', pageId);
     console.log('Current userProfile:', this.userProfile);
     
-    // Special handling for tracker page
+    // Special handling for tracker and history pages
     if (pageId === 'trackerPage') {
       console.log('Handling tracker page navigation');
       // Check if we have a valid profile with calculated goals
@@ -200,6 +229,18 @@ class CalorieTracker {
         if (dailyNotesTextarea) {
           dailyNotesTextarea.value = this.dailyNotes;
         }
+      }
+    } else if (pageId === 'historyPage') {
+      console.log('Handling history page navigation');
+      // Check if we have a valid profile with calculated goals
+      if (!this.userProfile || !this.userProfile.targetCalories) {
+        console.log('Profile incomplete, redirecting to setup');
+        // No valid profile, redirect to setup
+        this.showNotification('Need to setup the profile first.');
+        pageId = 'setupPage';
+      } else {
+        // Load and display history data
+        setTimeout(() => this.updateHistoryPage(), 100);
       }
     }
 
@@ -700,6 +741,13 @@ class CalorieTracker {
 
     this.dailyEntries.push(entry);
     this.saveDailyEntries();
+    
+    // Check if daily calorie limit is exceeded
+    this.checkCalorieLimit();
+    
+    // Save to daily history
+    this.saveDailyHistory();
+    
     this.updateUI();
     
     // Reset form
@@ -747,11 +795,178 @@ class CalorieTracker {
     this.showNotification('Entry loaded for editing. Make changes and add again.');
   }
 
+  // Calorie limit checking
+  checkCalorieLimit() {
+    if (!this.userProfile || !this.userProfile.targetCalories) return;
+    
+    const totalConsumed = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
+    const dailyGoal = this.userProfile.targetCalories;
+    
+    if (totalConsumed > dailyGoal) {
+      const message = translationManager.translate('calorie_limit_exceeded').replace('{goal}', dailyGoal);
+      this.showNotification(message, 'warning');
+    }
+  }
+
+  // Daily history management
+  saveDailyHistory() {
+    if (!this.currentProfileKey) return;
+    
+    const today = this.getTodayKey();
+    const totalConsumed = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
+    const dailyGoal = this.userProfile.targetCalories || 0;
+    
+    const historyKey = `${this.currentProfileKey}_history`;
+    let history = JSON.parse(localStorage.getItem(historyKey)) || {};
+    
+    history[today] = {
+      date: today,
+      consumed: totalConsumed,
+      goal: dailyGoal,
+      entries: [...this.dailyEntries],
+      notes: this.dailyNotes || '',
+      timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem(historyKey, JSON.stringify(history));
+  }
+
+  loadDailyHistory() {
+    if (!this.currentProfileKey) return {};
+    
+    const historyKey = `${this.currentProfileKey}_history`;
+    return JSON.parse(localStorage.getItem(historyKey)) || {};
+  }
+
+  // History page functionality
+  updateHistoryPage() {
+    const historyPeriod = document.getElementById('historyPeriod');
+    const period = historyPeriod ? parseInt(historyPeriod.value) : 60;
+    
+    const history = this.loadDailyHistory();
+    const historyArray = Object.values(history);
+    
+    // Filter by selected period
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - period);
+    
+    const filteredHistory = historyArray.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= cutoffDate;
+    });
+    
+    // Sort by date (newest first)
+    filteredHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    this.updateHistorySummary(filteredHistory);
+    this.updateHistoryTable(filteredHistory);
+  }
+
+  updateHistorySummary(historyData) {
+    const avgDailyIntake = document.getElementById('avgDailyIntake');
+    const daysWithinGoal = document.getElementById('daysWithinGoal');
+    const daysExceeded = document.getElementById('daysExceeded');
+    
+    if (historyData.length === 0) {
+      if (avgDailyIntake) avgDailyIntake.textContent = '0';
+      if (daysWithinGoal) daysWithinGoal.textContent = '0';
+      if (daysExceeded) daysExceeded.textContent = '0';
+      return;
+    }
+    
+    const totalConsumed = historyData.reduce((sum, day) => sum + day.consumed, 0);
+    const avgIntake = Math.round(totalConsumed / historyData.length);
+    
+    const withinGoalCount = historyData.filter(day => 
+      day.consumed <= day.goal && day.consumed >= day.goal * 0.8
+    ).length;
+    
+    const exceededCount = historyData.filter(day => day.consumed > day.goal).length;
+    
+    if (avgDailyIntake) avgDailyIntake.textContent = avgIntake;
+    if (daysWithinGoal) daysWithinGoal.textContent = withinGoalCount;
+    if (daysExceeded) daysExceeded.textContent = exceededCount;
+  }
+
+  updateHistoryTable(historyData) {
+    const tableBody = document.getElementById('historyTableBody');
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = '';
+    
+    if (historyData.length === 0) {
+      const row = document.createElement('tr');
+      row.innerHTML = '<td colspan="5" style="text-align: center; color: var(--text-secondary);">No data available for the selected period</td>';
+      tableBody.appendChild(row);
+      return;
+    }
+    
+    historyData.forEach(day => {
+      const row = document.createElement('tr');
+      const date = new Date(day.date).toLocaleDateString();
+      const difference = day.consumed - day.goal;
+      const status = this.getCalorieStatus(day.consumed, day.goal);
+      
+      row.innerHTML = `
+        <td>${date}</td>
+        <td>${day.consumed} kcal</td>
+        <td>${day.goal} kcal</td>
+        <td class="${difference > 0 ? 'difference-positive' : 'difference-negative'}">
+          ${difference > 0 ? '+' : ''}${difference} kcal
+        </td>
+        <td><span class="status-badge ${status.class}">${status.text}</span></td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+  }
+
+  getCalorieStatus(consumed, goal) {
+    if (consumed > goal) {
+      return {
+        class: 'status-exceeded',
+        text: translationManager.translate('exceeded_goal')
+      };
+    } else if (consumed >= goal * 0.8) {
+      return {
+        class: 'status-within',
+        text: translationManager.translate('within_goal')
+      };
+    } else {
+      return {
+        class: 'status-below',
+        text: translationManager.translate('below_goal')
+      };
+    }
+  }
+
+  // Auto-rollover to next day
+  checkDayRollover() {
+    const today = this.getTodayKey();
+    const lastActiveDate = localStorage.getItem(`${this.currentProfileKey}_lastActiveDate`);
+    
+    if (lastActiveDate && lastActiveDate !== today) {
+      // New day detected, save yesterday's data and reset
+      this.saveDailyHistory();
+      this.dailyEntries = [];
+      this.dailyNotes = '';
+      this.saveDailyEntries();
+      localStorage.setItem(`${this.currentProfileKey}_lastActiveDate`, today);
+    } else if (!lastActiveDate) {
+      localStorage.setItem(`${this.currentProfileKey}_lastActiveDate`, today);
+    }
+  }
+
   // UI Updates
   updateUI() {
     this.updateDailySummary();
     this.updateFoodLog();
     this.updateProgressChart();
+    
+    // Update history page if it's currently active
+    if (this.currentPage === 'historyPage') {
+      this.updateHistoryPage();
+    }
   }
 
   updateDailySummary() {
@@ -1289,16 +1504,32 @@ class CalorieTracker {
   }
 
   // Notifications
-  showNotification(message) {
+  showNotification(message, type = 'success') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
+    
+    // Set background color based on type
+    let backgroundColor;
+    switch (type) {
+      case 'warning':
+        backgroundColor = '#f59e0b';
+        break;
+      case 'error':
+        backgroundColor = '#ef4444';
+        break;
+      case 'success':
+      default:
+        backgroundColor = '#10b981';
+        break;
+    }
+    
     notification.style.cssText = `
       position: fixed;
       top: 20px;
       right: 20px;
-      background-color: #10b981;
+      background-color: ${backgroundColor};
       color: white;
       padding: 1rem 1.5rem;
       border-radius: 8px;
@@ -1319,7 +1550,8 @@ class CalorieTracker {
       notification.style.transform = 'translateX(0)';
     }, 100);
     
-    // Remove after 3 seconds
+    // Remove after 3 seconds (or 5 seconds for warnings/errors)
+    const duration = type === 'warning' || type === 'error' ? 5000 : 3000;
     setTimeout(() => {
       notification.style.transform = 'translateX(100%)';
       setTimeout(() => {
@@ -1327,7 +1559,7 @@ class CalorieTracker {
           notification.parentNode.removeChild(notification);
         }
       }, 300);
-    }, 3000);
+    }, duration);
   }
 
   // Update language elements

@@ -317,6 +317,63 @@
             </section>
         </main>
 
+            <!-- Page 3: Calorie History -->
+            <section id="historyPage" class="page">
+                <div class="container">
+                    <div class="history-header">
+                        <h2 data-translate="calorie_history">Calorie History</h2>
+                        <div class="history-controls">
+                            <select id="historyPeriod">
+                                <option value="7" data-translate="last_week">Last 7 Days</option>
+                                <option value="30" data-translate="last_month">Last 30 Days</option>
+                                <option value="60" data-translate="last_two_months" selected>Last 2 Months</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="history-summary">
+                        <div class="summary-stats">
+                            <div class="stat-card">
+                                <h4 data-translate="avg_daily_intake">Average Daily Intake</h4>
+                                <div class="stat-value" id="avgDailyIntake">0</div>
+                                <span class="stat-unit">kcal</span>
+                            </div>
+                            <div class="stat-card">
+                                <h4 data-translate="days_within_goal">Days Within Goal</h4>
+                                <div class="stat-value" id="daysWithinGoal">0</div>
+                                <span class="stat-unit">days</span>
+                            </div>
+                            <div class="stat-card">
+                                <h4 data-translate="days_exceeded">Days Exceeded</h4>
+                                <div class="stat-value" id="daysExceeded">0</div>
+                                <span class="stat-unit">days</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="history-table">
+                        <h3 data-translate="daily_breakdown">Daily Breakdown</h3>
+                        <div class="table-container">
+                            <table id="historyTable">
+                                <thead>
+                                    <tr>
+                                        <th data-translate="date">Date</th>
+                                        <th data-translate="calories_consumed">Calories Consumed</th>
+                                        <th data-translate="goal">Goal</th>
+                                        <th data-translate="difference">Difference</th>
+                                        <th data-translate="status">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <!-- History entries will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
         <!-- Navigation -->
         <nav class="bottom-nav">
             <button id="navSetup" class="nav-item active" data-page="setupPage">
@@ -326,6 +383,10 @@
             <button id="navTracker" class="nav-item" data-page="trackerPage">
                 <i class="fas fa-utensils"></i>
                 <span data-translate="tracker">Tracker</span>
+            </button>
+            <button id="navHistory" class="nav-item" data-page="historyPage">
+                <i class="fas fa-chart-line"></i>
+                <span data-translate="history">History</span>
             </button>
         </nav>
     </div>
