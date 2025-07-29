@@ -1180,14 +1180,14 @@ body {
 }
 
 .metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
   gap: 1rem;
+  justify-content: space-between;
 }
 
 @media (max-width: 768px) {
   .metrics-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 }
 
