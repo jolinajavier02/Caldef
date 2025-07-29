@@ -303,12 +303,6 @@
                     <div class="notes-card">
                         <div class="notes-header">
                             <h3 data-translate="daily_notes">Daily Notes</h3>
-                            <div class="notes-actions">
-                                <button class="btn-secondary btn-small" onclick="calorieTracker.showNotesHistory()">
-                                    <i class="fas fa-history"></i>
-                                    <span data-translate="history">History</span>
-                                </button>
-                            </div>
                         </div>
                         <textarea id="dailyNotes" placeholder="Add your notes, symptoms, or observations..." data-translate-placeholder="notes_placeholder"></textarea>
                         <button id="saveNotes" class="btn-secondary" data-translate="save_notes">Save Notes</button>
@@ -334,40 +328,27 @@
                     <div class="history-summary">
                         <div class="summary-stats">
                             <div class="stat-card">
-                                <h4 data-translate="avg_daily_intake">Average Daily Intake</h4>
-                                <div class="stat-value" id="avgDailyIntake">0</div>
+                                <h4 data-translate="total_consumed">Total Consumed</h4>
+                                <div class="stat-value" id="totalConsumed">0</div>
                                 <span class="stat-unit">kcal</span>
                             </div>
                             <div class="stat-card">
-                                <h4 data-translate="days_within_goal">Days Within Goal</h4>
-                                <div class="stat-value" id="daysWithinGoal">0</div>
-                                <span class="stat-unit">days</span>
+                                <h4 data-translate="avg_daily_intake">Daily Intake</h4>
+                                <div class="stat-value" id="avgDailyIntake">0</div>
+                                <span class="stat-unit">kcal/day</span>
                             </div>
                             <div class="stat-card">
-                                <h4 data-translate="days_exceeded">Days Exceeded</h4>
-                                <div class="stat-value" id="daysExceeded">0</div>
+                                <h4 data-translate="days_remaining">Days Remaining</h4>
+                                <div class="stat-value" id="daysRemaining">0</div>
                                 <span class="stat-unit">days</span>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="history-table">
+                    <div class="history-details">
                         <h3 data-translate="daily_breakdown">Daily Breakdown</h3>
-                        <div class="table-container">
-                            <table id="historyTable">
-                                <thead>
-                                    <tr>
-                                        <th data-translate="date">Date</th>
-                                        <th data-translate="calories_consumed">Calories Consumed</th>
-                                        <th data-translate="goal">Goal</th>
-                                        <th data-translate="difference">Difference</th>
-                                        <th data-translate="status">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="historyTableBody">
-                                    <!-- History entries will be populated here -->
-                                </tbody>
-                            </table>
+                        <div id="historyDetailsContainer" class="history-details-container">
+                            <!-- History details will be populated here -->
                         </div>
                     </div>
                 </div>

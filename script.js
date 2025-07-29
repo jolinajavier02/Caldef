@@ -863,61 +863,115 @@ class CalorieTracker {
   }
 
   updateHistorySummary(historyData) {
+    const totalConsumedEl = document.getElementById('totalConsumed');
     const avgDailyIntake = document.getElementById('avgDailyIntake');
-    const daysWithinGoal = document.getElementById('daysWithinGoal');
-    const daysExceeded = document.getElementById('daysExceeded');
+    const daysRemainingEl = document.getElementById('daysRemaining');
     
     if (historyData.length === 0) {
+      if (totalConsumedEl) totalConsumedEl.textContent = '0';
       if (avgDailyIntake) avgDailyIntake.textContent = '0';
-      if (daysWithinGoal) daysWithinGoal.textContent = '0';
-      if (daysExceeded) daysExceeded.textContent = '0';
+      if (daysRemainingEl) daysRemainingEl.textContent = '0';
       return;
     }
     
     const totalConsumed = historyData.reduce((sum, day) => sum + day.consumed, 0);
     const avgIntake = Math.round(totalConsumed / historyData.length);
     
-    const withinGoalCount = historyData.filter(day => 
-      day.consumed <= day.goal && day.consumed >= day.goal * 0.8
-    ).length;
+    // Calculate days remaining based on selected period
+    const historyPeriod = document.getElementById('historyPeriod');
+    const selectedPeriod = historyPeriod ? parseInt(historyPeriod.value) : 60;
+    const daysRemaining = Math.max(0, selectedPeriod - historyData.length);
     
-    const exceededCount = historyData.filter(day => day.consumed > day.goal).length;
-    
+    if (totalConsumedEl) totalConsumedEl.textContent = totalConsumed.toLocaleString();
     if (avgDailyIntake) avgDailyIntake.textContent = avgIntake;
-    if (daysWithinGoal) daysWithinGoal.textContent = withinGoalCount;
-    if (daysExceeded) daysExceeded.textContent = exceededCount;
+    if (daysRemainingEl) daysRemainingEl.textContent = daysRemaining;
   }
 
   updateHistoryTable(historyData) {
-    const tableBody = document.getElementById('historyTableBody');
-    if (!tableBody) return;
+    const historyDetails = document.getElementById('history-details');
+    if (!historyDetails) return;
     
-    tableBody.innerHTML = '';
+    const container = historyDetails.querySelector('.history-details-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
     
     if (historyData.length === 0) {
-      const row = document.createElement('tr');
-      row.innerHTML = '<td colspan="5" style="text-align: center; color: var(--text-secondary);">No data available for the selected period</td>';
-      tableBody.appendChild(row);
+      const noDataDiv = document.createElement('div');
+      noDataDiv.className = 'no-data-message';
+      noDataDiv.textContent = this.translations.no_data || 'No data available';
+      container.appendChild(noDataDiv);
       return;
     }
     
     historyData.forEach(day => {
-      const row = document.createElement('tr');
-      const date = new Date(day.date).toLocaleDateString();
-      const difference = day.consumed - day.goal;
-      const status = this.getCalorieStatus(day.consumed, day.goal);
+      const dayCard = document.createElement('div');
+      dayCard.className = 'history-day-card';
       
-      row.innerHTML = `
-        <td>${date}</td>
-        <td>${day.consumed} kcal</td>
-        <td>${day.goal} kcal</td>
-        <td class="${difference > 0 ? 'difference-positive' : 'difference-negative'}">
-          ${difference > 0 ? '+' : ''}${difference} kcal
-        </td>
-        <td><span class="status-badge ${status.class}">${status.text}</span></td>
-      `;
+      // Day header with date and calories
+      const header = document.createElement('div');
+      header.className = 'history-day-header';
       
-      tableBody.appendChild(row);
+      const dateDiv = document.createElement('div');
+      dateDiv.className = 'history-date';
+      dateDiv.textContent = new Date(day.date).toLocaleDateString();
+      
+      const caloriesDiv = document.createElement('div');
+      caloriesDiv.className = 'history-calories';
+      caloriesDiv.textContent = `${day.consumed} / ${day.goal} cal`;
+      
+      header.appendChild(dateDiv);
+      header.appendChild(caloriesDiv);
+      dayCard.appendChild(header);
+      
+      // Food log section
+      const foodLogDiv = document.createElement('div');
+      foodLogDiv.className = 'history-food-log';
+      
+      const foodLogTitle = document.createElement('h4');
+      foodLogTitle.innerHTML = '<i class="fas fa-utensils"></i> ' + (translationManager.translate('food_log') || 'Food Log');
+      foodLogDiv.appendChild(foodLogTitle);
+      
+      // Load and display food entries for this day
+      if (day.entries && day.entries.length > 0) {
+        day.entries.forEach(entry => {
+          const foodItem = document.createElement('div');
+          foodItem.className = 'history-food-item';
+          foodItem.textContent = `${entry.foodName} (${entry.quantity}${entry.unit}) - ${entry.calories} cal`;
+          foodLogDiv.appendChild(foodItem);
+        });
+      } else {
+        const noEntries = document.createElement('div');
+        noEntries.className = 'history-food-item';
+        noEntries.textContent = translationManager.translate('no_entries_day') || 'No entries for this day';
+        noEntries.style.fontStyle = 'italic';
+        foodLogDiv.appendChild(noEntries);
+      }
+      
+      dayCard.appendChild(foodLogDiv);
+      
+      // Notes section
+      const notesDiv = document.createElement('div');
+      notesDiv.className = 'history-notes';
+      
+      const notesTitle = document.createElement('h4');
+      notesTitle.innerHTML = '<i class="fas fa-sticky-note"></i> ' + (translationManager.translate('daily_notes') || 'Daily Notes');
+      notesDiv.appendChild(notesTitle);
+      
+      // Load and display notes for this day
+      const notesContent = document.createElement('div');
+      notesContent.className = 'history-notes-content';
+      
+      if (day.notes && day.notes.trim()) {
+        notesContent.textContent = day.notes;
+      } else {
+        notesContent.textContent = translationManager.translate('no_notes_day') || 'No notes for this day';
+      }
+      
+      notesDiv.appendChild(notesContent);
+      dayCard.appendChild(notesDiv);
+      
+      container.appendChild(dayCard);
     });
   }
 

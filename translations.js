@@ -113,7 +113,12 @@ const translations = {
     within_goal: "Within Goal",
     below_goal: "Below Goal",
     exceeded_goal: "Exceeded Goal",
-    calorie_limit_exceeded: "You have exceeded your {goal} kcal daily limit."
+    calorie_limit_exceeded: "You have exceeded your {goal} kcal daily limit.",
+    total_consumed: "Total Consumed",
+    days_remaining: "Days Remaining",
+    food_log: "Food Log",
+    no_entries_day: "No entries for this day",
+    no_notes_day: "No notes for this day"
   },
   es: {
      app_title: "CalDef",

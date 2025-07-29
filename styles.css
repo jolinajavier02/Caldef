@@ -978,44 +978,102 @@ body {
     color: var(--text-secondary);
 }
 
-.history-table {
+.history-details {
     background: var(--card-bg);
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
-.history-table h3 {
+.history-details h3 {
     margin: 0;
     padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-.table-container {
-    overflow-x: auto;
-}
-
-#historyTable {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#historyTable th,
-#historyTable td {
+.history-details-container {
     padding: 1rem;
-    text-align: left;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.history-day-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.history-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-#historyTable th {
-    background: var(--bg-secondary);
+.history-date {
     font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 1.1rem;
+    color: var(--primary-color);
 }
 
-#historyTable td {
+.history-calories {
     font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.history-food-log {
+    margin-bottom: 1rem;
+}
+
+.history-food-log h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.history-food-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.history-food-item:last-child {
+    border-bottom: none;
+}
+
+.history-notes {
+    margin-top: 1rem;
+}
+
+.history-notes h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.history-notes-content {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.no-data-message {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
 }
 
 .status-badge {
