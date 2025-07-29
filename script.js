@@ -1456,15 +1456,22 @@ class CalorieTracker {
   // Update daily calorie goal display
   updateDailyCalorieGoal() {
     const goalValueEl = document.getElementById('trackerCalorieGoal');
+    const remainingCaloriesEl = document.getElementById('remainingCalories');
     
-    if (!goalValueEl) return;
+    if (!goalValueEl || !remainingCaloriesEl) return;
     
     if (!this.userProfile || !this.userProfile.targetCalories) {
       goalValueEl.textContent = '0';
+      remainingCaloriesEl.textContent = '0';
       return;
     }
     
-    goalValueEl.textContent = this.userProfile.targetCalories.toLocaleString();
+    const dailyGoal = this.userProfile.targetCalories;
+    const totalConsumed = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
+    const remaining = Math.max(0, dailyGoal - totalConsumed);
+    
+    goalValueEl.textContent = dailyGoal.toLocaleString();
+    remainingCaloriesEl.textContent = remaining.toLocaleString();
   }
 
   // Update metrics section
@@ -1472,16 +1479,14 @@ class CalorieTracker {
     const totalConsumedEl = document.getElementById('totalConsumedCalories');
     const daysConsumedEl = document.getElementById('daysConsumed');
     const daysRemainingEl = document.getElementById('daysRemaining');
-    const calorieGoalEl = document.getElementById('calorieGoalAmount');
     
-    if (!totalConsumedEl || !daysConsumedEl || !daysRemainingEl || !calorieGoalEl) return;
+    if (!totalConsumedEl || !daysConsumedEl || !daysRemainingEl) return;
     
     // Check if goals have been calculated
     if (!this.userProfile || !this.userProfile.targetCalories) {
       totalConsumedEl.textContent = '0';
       daysConsumedEl.textContent = '0';
       daysRemainingEl.textContent = '0';
-      calorieGoalEl.textContent = '0';
       return;
     }
     
@@ -1523,7 +1528,6 @@ class CalorieTracker {
     totalConsumedEl.textContent = totalConsumed.toLocaleString();
     daysConsumedEl.textContent = daysWithEntries.toString();
     daysRemainingEl.textContent = daysRemaining.toString();
-    calorieGoalEl.textContent = this.userProfile.targetCalories.toLocaleString();
   }
 
   updateProgressChart() {
