@@ -214,24 +214,20 @@
                                 </div>
                                 <div class="form-group">
                                     <label data-translate="food_category">Food Category</label>
-                                    <select id="foodCategory" required>
+                                    <select id="foodCategory" onchange="calorieTracker.updateSpecificTypes(this.value)" required>
                                         <option value="" data-translate="select_option">Select...</option>
-                                        <!-- Proteins -->
-                                        <option value="chicken" data-translate="chicken">Chicken</option>
                                         <option value="egg" data-translate="egg">Egg</option>
-                                        <!-- Carbohydrates -->
                                         <option value="bread" data-translate="bread">Bread</option>
+                                        <option value="chicken" data-translate="chicken">Chicken</option>
+                                        <option value="potato" data-translate="potato">Potato</option>
+                                        <option value="fruit" data-translate="fruit">Fruit</option>
                                         <option value="pasta" data-translate="pasta">Pasta</option>
                                         <option value="rice" data-translate="rice">Rice</option>
-                                        <option value="potato" data-translate="potato">Potato</option>
+                                        <option value="vegetable" data-translate="vegetable">Vegetable</option>
                                         <option value="pancake" data-translate="pancake">Pancake</option>
                                         <option value="cake" data-translate="cake">Cake</option>
-                                        <!-- Fruits & Vegetables -->
-                                        <option value="fruit" data-translate="fruit">Fruit</option>
-                                        <option value="vegetable" data-translate="vegetable">Vegetable</option>
                                         <option value="salad" data-translate="salad">Salad</option>
-                                        <!-- International Cuisines -->
-                                        <option value="international_cuisines" data-translate="international_cuisines">International Cuisines</option>
+                                        <option value="international_cuisines" data-translate="international_cuisines">International Cuisine</option>
                                     </select>
                                 </div>
                             </div>

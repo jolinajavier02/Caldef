@@ -135,7 +135,7 @@ const translations = {
     metrics_overview: "Metrics Overview",
         notes_placeholder: "Add your daily notes, symptoms, or observations...",
         save_notes: "Save Notes",
-        international_cuisines: "International Cuisines"
+        international_cuisines: "International Cuisine"
   },
   es: {
      app_title: "CalDef",
