@@ -169,13 +169,22 @@ class CalorieTracker {
 
   // Get time goal in days
   getTimeGoalInDays(timeGoal) {
+    // Handle both old string format and new numeric week format
     const timeGoalMap = {
+      // Old string format (for backward compatibility)
       '2weeks': 14,
       '1month': 30,
       '2months': 60,
       '3months': 90,
       '6months': 180,
-      '1year': 365
+      '1year': 365,
+      // New numeric week format
+      '2': 14,   // 2 weeks
+      '4': 28,   // 1 month (4 weeks)
+      '8': 56,   // 2 months (8 weeks)
+      '12': 84,  // 3 months (12 weeks)
+      '24': 168, // 6 months (24 weeks)
+      '52': 364  // 1 year (52 weeks)
     };
     return timeGoalMap[timeGoal] || 90;
   }
@@ -917,8 +926,7 @@ class CalorieTracker {
     // Calculate required daily calorie deficit/surplus based on timeline
     // 1 kg of fat = approximately 7700 calories
     const totalCaloriesNeeded = weightDifference * 7700;
-    const weeksToTarget = parseInt(formData.timeGoal); // timeGoal is in weeks
-    const daysToTarget = weeksToTarget * 7; // Convert weeks to days
+    const daysToTarget = this.getTimeGoalInDays(formData.timeGoal); // Get actual days from time goal
     const dailyCalorieAdjustment = totalCaloriesNeeded / daysToTarget;
     
     let targetCalories = dailyCalories;
