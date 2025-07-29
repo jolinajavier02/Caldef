@@ -254,40 +254,7 @@ class CalorieTracker {
     });
   }
 
-  // Update metrics section
-  updateMetrics() {
-    if (!this.userProfile || !this.userProfile.targetCalories) return;
-    
-    // Calculate total consumed calories from all entries
-    const allEntries = this.getAllFoodEntries();
-    const totalConsumed = allEntries.reduce((sum, entry) => sum + entry.calories, 0);
-    
-    // Calculate days consumed (unique dates with entries)
-    const uniqueDates = new Set(allEntries.map(entry => {
-      const date = new Date(entry.timestamp || entry.date);
-      return date.toDateString();
-    }));
-    const daysConsumed = uniqueDates.size;
-    
-    // Calculate days remaining based on goal timeline
-    const goalStartDate = new Date(this.userProfile.goalStartDate || Date.now());
-    const targetDate = new Date(this.userProfile.targetDate || Date.now());
-    const today = new Date();
-    const totalDays = Math.ceil((targetDate - goalStartDate) / (1000 * 60 * 60 * 24));
-    const daysPassed = Math.ceil((today - goalStartDate) / (1000 * 60 * 60 * 24));
-    const daysRemaining = Math.max(0, totalDays - daysPassed);
-    
-    // Update metric values
-    const totalConsumedElement = document.getElementById('total-consumed-value');
-    const daysConsumedElement = document.getElementById('days-consumed-value');
-    const daysRemainingElement = document.getElementById('days-remaining-value');
-    const calorieGoalElement = document.getElementById('calorie-goal-value');
-    
-    if (totalConsumedElement) totalConsumedElement.textContent = totalConsumed.toLocaleString();
-    if (daysConsumedElement) daysConsumedElement.textContent = daysConsumed;
-    if (daysRemainingElement) daysRemainingElement.textContent = daysRemaining;
-    if (calorieGoalElement) calorieGoalElement.textContent = this.userProfile.targetCalories.toLocaleString();
-  }
+
 
   // Get all food entries from storage
   getAllFoodEntries() {
@@ -1480,7 +1447,7 @@ class CalorieTracker {
 
   // Update daily calorie goal display
   updateDailyCalorieGoal() {
-    const goalValueEl = document.getElementById('dailyCalorieGoalValue');
+    const goalValueEl = document.getElementById('trackerCalorieGoal');
     
     if (!goalValueEl) return;
     
@@ -1494,10 +1461,10 @@ class CalorieTracker {
 
   // Update metrics section
   updateMetrics() {
-    const totalConsumedEl = document.getElementById('metricTotalConsumed');
-    const daysConsumedEl = document.getElementById('metricDaysConsumed');
-    const daysRemainingEl = document.getElementById('metricDaysRemaining');
-    const calorieGoalEl = document.getElementById('metricCalorieGoal');
+    const totalConsumedEl = document.getElementById('totalConsumedCalories');
+    const daysConsumedEl = document.getElementById('daysConsumed');
+    const daysRemainingEl = document.getElementById('daysRemaining');
+    const calorieGoalEl = document.getElementById('calorieGoalAmount');
     
     if (!totalConsumedEl || !daysConsumedEl || !daysRemainingEl || !calorieGoalEl) return;
     
