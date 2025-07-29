@@ -493,6 +493,95 @@ const foodDatabase = {
       fruit_salad: { name: "Fruit Salad", calories_per_100g: 50 },
       quinoa_salad: { name: "Quinoa Salad", calories_per_100g: 120 }
     }
+  },
+
+  // International Cuisines
+  international: {
+    name: "International Cuisines",
+    types: {
+      // Italian
+      pizza_margherita: { name: "Pizza Margherita", calories_per_100g: 266 },
+      pizza_pepperoni: { name: "Pizza Pepperoni", calories_per_100g: 298 },
+      risotto_mushroom: { name: "Mushroom Risotto", calories_per_100g: 166 },
+      lasagna_meat: { name: "Meat Lasagna", calories_per_100g: 135 },
+      spaghetti_carbonara: { name: "Spaghetti Carbonara", calories_per_100g: 540 },
+      fettuccine_alfredo: { name: "Fettuccine Alfredo", calories_per_100g: 389 },
+      tiramisu: { name: "Tiramisu", calories_per_100g: 240 },
+      
+      // Chinese
+      fried_rice: { name: "Chinese Fried Rice", calories_per_100g: 163 },
+      sweet_sour_pork: { name: "Sweet and Sour Pork", calories_per_100g: 231 },
+      kung_pao_chicken: { name: "Kung Pao Chicken", calories_per_100g: 180 },
+      beef_broccoli: { name: "Beef and Broccoli", calories_per_100g: 150 },
+      chow_mein: { name: "Chow Mein", calories_per_100g: 151 },
+      dim_sum: { name: "Dim Sum (average)", calories_per_100g: 200 },
+      peking_duck: { name: "Peking Duck", calories_per_100g: 337 },
+      
+      // Japanese
+      sushi_salmon: { name: "Salmon Sushi", calories_per_100g: 142 },
+      sushi_tuna: { name: "Tuna Sushi", calories_per_100g: 130 },
+      ramen: { name: "Ramen", calories_per_100g: 436 },
+      tempura: { name: "Tempura", calories_per_100g: 290 },
+      teriyaki_chicken: { name: "Teriyaki Chicken", calories_per_100g: 180 },
+      miso_soup: { name: "Miso Soup", calories_per_100g: 40 },
+      yakitori: { name: "Yakitori", calories_per_100g: 203 },
+      
+      // Indian
+      chicken_curry: { name: "Chicken Curry", calories_per_100g: 210 },
+      butter_chicken: { name: "Butter Chicken", calories_per_100g: 438 },
+      biryani: { name: "Biryani", calories_per_100g: 200 },
+      naan_bread: { name: "Naan Bread", calories_per_100g: 310 },
+      samosa: { name: "Samosa", calories_per_100g: 262 },
+      dal: { name: "Dal (Lentil Curry)", calories_per_100g: 116 },
+      tandoori_chicken: { name: "Tandoori Chicken", calories_per_100g: 165 },
+      
+      // Mexican
+      tacos_beef: { name: "Beef Tacos", calories_per_100g: 226 },
+      tacos_chicken: { name: "Chicken Tacos", calories_per_100g: 206 },
+      burrito: { name: "Burrito", calories_per_100g: 206 },
+      quesadilla: { name: "Quesadilla", calories_per_100g: 281 },
+      enchiladas: { name: "Enchiladas", calories_per_100g: 200 },
+      guacamole: { name: "Guacamole", calories_per_100g: 160 },
+      nachos: { name: "Nachos", calories_per_100g: 346 },
+      
+      // Thai
+      pad_thai: { name: "Pad Thai", calories_per_100g: 153 },
+      green_curry: { name: "Green Curry", calories_per_100g: 169 },
+      tom_yum: { name: "Tom Yum Soup", calories_per_100g: 87 },
+      massaman_curry: { name: "Massaman Curry", calories_per_100g: 185 },
+      som_tam: { name: "Som Tam (Papaya Salad)", calories_per_100g: 46 },
+      
+      // Korean
+      kimchi: { name: "Kimchi", calories_per_100g: 15 },
+      bulgogi: { name: "Bulgogi", calories_per_100g: 190 },
+      bibimbap: { name: "Bibimbap", calories_per_100g: 121 },
+      korean_bbq: { name: "Korean BBQ", calories_per_100g: 250 },
+      
+      // Mediterranean
+      hummus: { name: "Hummus", calories_per_100g: 166 },
+      falafel: { name: "Falafel", calories_per_100g: 333 },
+      greek_salad: { name: "Greek Salad", calories_per_100g: 107 },
+      moussaka: { name: "Moussaka", calories_per_100g: 154 },
+      gyros: { name: "Gyros", calories_per_100g: 215 },
+      
+      // French
+      croissant: { name: "Croissant", calories_per_100g: 406 },
+      quiche: { name: "Quiche", calories_per_100g: 243 },
+      ratatouille: { name: "Ratatouille", calories_per_100g: 32 },
+      coq_au_vin: { name: "Coq au Vin", calories_per_100g: 165 },
+      
+      // American
+      hamburger: { name: "Hamburger", calories_per_100g: 295 },
+      hot_dog: { name: "Hot Dog", calories_per_100g: 290 },
+      mac_cheese: { name: "Mac and Cheese", calories_per_100g: 164 },
+      bbq_ribs: { name: "BBQ Ribs", calories_per_100g: 277 },
+      
+      // Middle Eastern
+      shawarma: { name: "Shawarma", calories_per_100g: 215 },
+      kebab: { name: "Kebab", calories_per_100g: 200 },
+      tabbouleh: { name: "Tabbouleh", calories_per_100g: 36 },
+      baklava: { name: "Baklava", calories_per_100g: 307 }
+    }
   }
  };
 
@@ -542,6 +631,21 @@ const unitConversions = {
 class FoodCalculator {
   static getCalories(category, type, quantity, unit) {
     const food = foodDatabase[category];
+    
+    // Handle International Cuisines with custom cuisine names
+    if (category === 'international_cuisines') {
+      const cuisineInfo = this.findCuisineByName(type);
+      if (cuisineInfo) {
+        const caloriesPerGram = cuisineInfo.calories_per_100g / 100;
+        const weightInGrams = this.convertToGrams(quantity, unit, category, type);
+        return Math.round(caloriesPerGram * weightInGrams);
+      }
+      // Default calorie value if cuisine not found
+      const defaultCalories = 250; // Average calorie per 100g for unknown cuisines
+      const weightInGrams = this.convertToGrams(quantity, unit, category, type);
+      return Math.round((defaultCalories / 100) * weightInGrams);
+    }
+    
     if (!food || !food.types[type]) {
       return 0;
     }
@@ -617,6 +721,16 @@ class FoodCalculator {
   }
 
   static getFoodName(category, type) {
+    // Handle International Cuisines with custom cuisine names
+    if (category === 'international_cuisines') {
+      const cuisineInfo = this.findCuisineByName(type);
+      if (cuisineInfo) {
+        return cuisineInfo.name;
+      }
+      // Return the entered name if not found in database
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+    
     const food = foodDatabase[category];
     if (food && food.types[type]) {
       return food.types[type].name;
@@ -639,6 +753,35 @@ class FoodCalculator {
         category: food.name
       };
     }
+    return null;
+  }
+
+  // Find cuisine by name in international_cuisines category
+  static findCuisineByName(cuisineName) {
+    const internationalCuisines = foodDatabase.international_cuisines;
+    if (!internationalCuisines) return null;
+    
+    const searchTerm = cuisineName.toLowerCase().trim();
+    
+    // First try exact match
+    const exactMatch = Object.keys(internationalCuisines.types).find(key => 
+      internationalCuisines.types[key].name.toLowerCase() === searchTerm
+    );
+    
+    if (exactMatch) {
+      return internationalCuisines.types[exactMatch];
+    }
+    
+    // Then try partial match
+    const partialMatch = Object.keys(internationalCuisines.types).find(key => 
+      internationalCuisines.types[key].name.toLowerCase().includes(searchTerm) ||
+      searchTerm.includes(internationalCuisines.types[key].name.toLowerCase())
+    );
+    
+    if (partialMatch) {
+      return internationalCuisines.types[partialMatch];
+    }
+    
     return null;
   }
 

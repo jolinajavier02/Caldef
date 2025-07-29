@@ -393,6 +393,10 @@ body {
   gap: 1rem;
 }
 
+.form-row.three-columns {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -985,6 +989,411 @@ body {
     overflow: hidden;
 }
 
+/* Pinned Notification */
+.pinned-notification {
+  background: linear-gradient(135deg, var(--primary-color), #4a90e2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  position: sticky;
+  top: 1rem;
+  z-index: 10;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  font-weight: 500;
+}
+
+.notification-content i {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Today's Food Log */
+.todays-food-log {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.todays-food-log .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.todays-food-log h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.daily-total {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.total-calories {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.food-entries-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.food-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.food-entry:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.food-info {
+  flex: 1;
+}
+
+.food-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.food-details {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.food-calories {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-right: 1rem;
+}
+
+.no-entries-message {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+}
+
+/* Daily Calorie Goal Section */
+.daily-calorie-goal-section {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.goal-card {
+  text-align: center;
+}
+
+.goal-header h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.goal-value {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0.5rem 0;
+}
+
+.goal-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* Enhanced Metrics Section */
+.metrics-section {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.metrics-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.metric-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.metric-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-icon {
+  margin-bottom: 1rem;
+}
+
+.metric-icon i {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Daily Notes Section */
+.daily-notes-section {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.notes-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.notes-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notes-content textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.notes-content textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.notes-content textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  max-width: 90%;
+  max-height: 80%;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.notes-history-modal {
+  width: 600px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notes-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-entry {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.entry-date {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.entry-notes {
+  color: var(--text-primary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+  .pinned-notification {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .notification-content {
+    font-size: 0.9rem;
+  }
+  
+  .todays-food-log .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .food-entry {
+    padding: 0.75rem;
+  }
+  
+  .food-name {
+    font-size: 0.95rem;
+  }
+  
+  .food-details {
+    font-size: 0.85rem;
+  }
+  
+  .goal-value {
+    font-size: 2.5rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .metric-box {
+    padding: 1rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .notes-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .notes-content textarea {
+    min-height: 100px;
+  }
+}
+
 .history-details h3 {
     margin: 0;
     padding: 1.5rem;
@@ -1188,6 +1597,145 @@ body {
 .form-group select {
   min-width: 0;
   width: 100%;
+}
+
+/* Setup Results Styles */
+.setup-results {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 2px solid var(--success-color);
+}
+
+.setup-results h3 {
+    color: var(--success-color);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.result-card {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.result-header h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.result-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--success-color);
+    margin: 0.5rem 0;
+}
+
+.result-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.chart-container {
+    margin-top: 1rem;
+}
+
+.chart-placeholder {
+    padding: 2rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* Calorie Goal Section */
+.calorie-goal-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  text-align: center;
+  border-left: 4px solid var(--primary-color);
+}
+
+.calorie-goal-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.goal-display {
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+.goal-value {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.goal-subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Metrics Section */
+.metrics-section {
+  margin: 2rem 0;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.metric-box {
+  background: var(--bg-primary);
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.metric-box:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Name Autocomplete */

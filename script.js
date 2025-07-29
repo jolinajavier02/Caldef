@@ -11,6 +11,396 @@ class CalorieTracker {
     this.init();
   }
 
+  // Show setup results
+  showSetupResults(formData) {
+    const setupResults = document.getElementById('setupResults');
+    const setupCalorieGoal = document.getElementById('setupCalorieGoal');
+    
+    if (setupResults && setupCalorieGoal) {
+      setupCalorieGoal.textContent = formData.targetCalories.toLocaleString();
+      setupResults.style.display = 'block';
+      
+      // Generate weight progress graph
+      this.generateSetupWeightProgressGraph(formData);
+      
+      // Scroll to results
+      setupResults.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  // Generate weight progress graph for setup results
+  generateSetupWeightProgressGraph(formData) {
+    const canvas = document.getElementById('setupProgressCanvas');
+    const placeholder = document.querySelector('#setupResults .chart-placeholder p');
+    
+    if (!canvas || !formData.currentWeight || !formData.targetWeight) return;
+    
+    // Show canvas and hide placeholder
+    canvas.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+    
+    this.drawSetupProgressChart(canvas, formData);
+  }
+
+  // Draw weight progress chart for setup results
+  drawSetupProgressChart(canvas, formData) {
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 60;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Set styles
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+    ctx.lineWidth = 3;
+    ctx.font = '12px Inter, sans-serif';
+    
+    const currentWeight = parseFloat(formData.currentWeight);
+    const targetWeight = parseFloat(formData.targetWeight);
+    const timeGoalDays = this.getTimeGoalInDays(formData.timeGoal);
+    
+    // Create projected weight loss timeline
+    const weightDiff = currentWeight - targetWeight;
+    const isWeightLoss = weightDiff > 0;
+    
+    // Generate data points for the timeline
+    const dataPoints = [];
+    const steps = Math.min(timeGoalDays / 7, 20); // Weekly steps, max 20 points
+    
+    for (let i = 0; i <= steps; i++) {
+      const progress = i / steps;
+      const projectedWeight = currentWeight - (weightDiff * progress);
+      dataPoints.push({
+        day: Math.round((timeGoalDays * progress)),
+        weight: projectedWeight,
+        x: padding + (progress * (width - 2 * padding)),
+        y: 0 // Will be calculated based on weight range
+      });
+    }
+    
+    // Calculate weight range for chart
+    const minWeight = Math.min(currentWeight, targetWeight) - 2;
+    const maxWeight = Math.max(currentWeight, targetWeight) + 2;
+    const weightRange = maxWeight - minWeight;
+    
+    // Calculate Y positions
+    dataPoints.forEach(point => {
+      point.y = padding + ((maxWeight - point.weight) / weightRange) * (height - 2 * padding);
+    });
+    
+    // Draw chart background
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary');
+    ctx.fillRect(padding, padding, width - 2 * padding, height - 2 * padding);
+    
+    // Draw grid lines
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-color');
+    ctx.lineWidth = 1;
+    
+    // Horizontal grid lines (weight)
+    for (let i = 0; i <= 4; i++) {
+      const y = padding + (i / 4) * (height - 2 * padding);
+      const weight = maxWeight - (i / 4) * weightRange;
+      
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(width - padding, y);
+      ctx.stroke();
+      
+      // Weight labels
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+      ctx.textAlign = 'right';
+      ctx.fillText(weight.toFixed(1) + (formData.weightUnit || 'kg'), padding - 10, y + 4);
+    }
+    
+    // Vertical grid lines (time)
+    for (let i = 0; i <= 4; i++) {
+      const x = padding + (i / 4) * (width - 2 * padding);
+      const days = Math.round((i / 4) * timeGoalDays);
+      
+      ctx.beginPath();
+      ctx.moveTo(x, padding);
+      ctx.lineTo(x, height - padding);
+      ctx.stroke();
+      
+      // Time labels
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+      ctx.textAlign = 'center';
+      ctx.fillText(days + 'd', x, height - padding + 20);
+    }
+    
+    // Draw projected weight line
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    
+    dataPoints.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+    ctx.stroke();
+    
+    // Draw data points
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+    dataPoints.forEach(point => {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+      ctx.fill();
+    });
+    
+    // Draw start and end labels
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
+    ctx.font = 'bold 12px Inter, sans-serif';
+    
+    // Start weight
+    ctx.textAlign = 'left';
+    ctx.fillText(`Start: ${currentWeight}${formData.weightUnit || 'kg'}`, dataPoints[0].x + 10, dataPoints[0].y - 10);
+    
+    // Target weight
+    const lastPoint = dataPoints[dataPoints.length - 1];
+    ctx.textAlign = 'right';
+    ctx.fillText(`Target: ${targetWeight}${formData.weightUnit || 'kg'}`, lastPoint.x - 10, lastPoint.y - 10);
+  }
+
+  // Get time goal in days
+  getTimeGoalInDays(timeGoal) {
+    const timeGoalMap = {
+      '2weeks': 14,
+      '1month': 30,
+      '2months': 60,
+      '3months': 90,
+      '6months': 180,
+      '1year': 365
+    };
+    return timeGoalMap[timeGoal] || 90;
+  }
+
+  // Update tracker history
+  updateTrackerHistory() {
+    // This function is kept for compatibility but no longer needed
+    // since comprehensive history section was removed
+  }
+
+  // Update today's food log
+  updateTodaysFoodLog() {
+    const container = document.querySelector('.food-entries-container');
+    const totalCaloriesElement = document.querySelector('.total-calories');
+    
+    if (!container || !totalCaloriesElement) return;
+    
+    // Get today's entries
+    const todayEntries = this.dailyEntries || [];
+    
+    // Calculate total calories
+    const totalCalories = todayEntries.reduce((sum, entry) => sum + entry.calories, 0);
+    totalCaloriesElement.textContent = `${totalCalories} ${translationManager.translate('calories')}`;
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    if (todayEntries.length === 0) {
+      // Show no entries message
+      const noEntriesDiv = document.createElement('div');
+      noEntriesDiv.className = 'no-entries-message';
+      noEntriesDiv.textContent = translationManager.translate('no_entries');
+      container.appendChild(noEntriesDiv);
+      return;
+    }
+    
+    // Display entries
+    todayEntries.forEach(entry => {
+      const entryDiv = document.createElement('div');
+      entryDiv.className = 'food-entry';
+      
+      const foodInfo = document.createElement('div');
+      foodInfo.className = 'food-info';
+      
+      const foodName = document.createElement('div');
+      foodName.className = 'food-name';
+      foodName.textContent = entry.food;
+      
+      const foodDetails = document.createElement('div');
+      foodDetails.className = 'food-details';
+      
+      // Add time to food details
+      const entryTime = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }) : '';
+      
+      const detailsText = entryTime ? 
+        `${entry.quantity} ${entry.unit} • ${translationManager.translate(entry.mealType)} • ${entryTime}` :
+        `${entry.quantity} ${entry.unit} • ${translationManager.translate(entry.mealType)}`;
+      
+      foodDetails.textContent = detailsText;
+      
+      foodInfo.appendChild(foodName);
+      foodInfo.appendChild(foodDetails);
+      
+      const foodCalories = document.createElement('div');
+      foodCalories.className = 'food-calories';
+      foodCalories.textContent = `${entry.calories} ${translationManager.translate('calories')}`;
+      
+      entryDiv.appendChild(foodInfo);
+      entryDiv.appendChild(foodCalories);
+      
+      container.appendChild(entryDiv);
+    });
+  }
+
+  // Update metrics section
+  updateMetrics() {
+    if (!this.userProfile || !this.userProfile.targetCalories) return;
+    
+    // Calculate total consumed calories from all entries
+    const allEntries = this.getAllFoodEntries();
+    const totalConsumed = allEntries.reduce((sum, entry) => sum + entry.calories, 0);
+    
+    // Calculate days consumed (unique dates with entries)
+    const uniqueDates = new Set(allEntries.map(entry => {
+      const date = new Date(entry.timestamp || entry.date);
+      return date.toDateString();
+    }));
+    const daysConsumed = uniqueDates.size;
+    
+    // Calculate days remaining based on goal timeline
+    const goalStartDate = new Date(this.userProfile.goalStartDate || Date.now());
+    const targetDate = new Date(this.userProfile.targetDate || Date.now());
+    const today = new Date();
+    const totalDays = Math.ceil((targetDate - goalStartDate) / (1000 * 60 * 60 * 24));
+    const daysPassed = Math.ceil((today - goalStartDate) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.max(0, totalDays - daysPassed);
+    
+    // Update metric values
+    const totalConsumedElement = document.getElementById('total-consumed-value');
+    const daysConsumedElement = document.getElementById('days-consumed-value');
+    const daysRemainingElement = document.getElementById('days-remaining-value');
+    const calorieGoalElement = document.getElementById('calorie-goal-value');
+    
+    if (totalConsumedElement) totalConsumedElement.textContent = totalConsumed.toLocaleString();
+    if (daysConsumedElement) daysConsumedElement.textContent = daysConsumed;
+    if (daysRemainingElement) daysRemainingElement.textContent = daysRemaining;
+    if (calorieGoalElement) calorieGoalElement.textContent = this.userProfile.targetCalories.toLocaleString();
+  }
+
+  // Get all food entries from storage
+  getAllFoodEntries() {
+    const allEntries = [];
+    const storageKeys = Object.keys(localStorage);
+    
+    storageKeys.forEach(key => {
+      if (key.startsWith(`${this.currentProfileKey}_dailyEntries_`)) {
+        try {
+          const entries = JSON.parse(localStorage.getItem(key)) || [];
+          allEntries.push(...entries);
+        } catch (e) {
+          console.error('Error parsing entries:', e);
+        }
+      }
+    });
+    
+    return allEntries;
+  }
+
+  // Save daily notes
+  saveNotes() {
+    const notesTextarea = document.getElementById('dailyNotes');
+    if (!notesTextarea) return;
+    
+    this.dailyNotes = notesTextarea.value;
+    this.saveDailyNotes();
+    
+    // Also save to history
+    const today = this.formatDateKey(new Date());
+    this.saveNotesToHistory(today, this.dailyNotes);
+    
+    this.showNotification('Notes saved successfully!');
+  }
+
+  // Show notes history
+  showNotesHistory() {
+    const notesHistory = this.loadNotesHistory();
+    
+    if (notesHistory.length === 0) {
+      this.showNotification('No notes history found.');
+      return;
+    }
+    
+    // Create modal for notes history
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content notes-history-modal">
+        <div class="modal-header">
+          <h3>Notes History</h3>
+          <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="notes-history-list">
+            ${notesHistory.map(entry => `
+              <div class="history-entry">
+                <div class="entry-date">${new Date(entry.date).toLocaleDateString()}</div>
+                <div class="entry-notes">${entry.notes}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+  
+  // Load notes history
+  loadNotesHistory() {
+    if (!this.currentProfileKey) return [];
+    
+    const historyKey = `${this.currentProfileKey}_notes_history`;
+    const history = localStorage.getItem(historyKey);
+    return history ? JSON.parse(history) : [];
+  }
+  
+  // Save notes to history
+  saveNotesToHistory(date, notes) {
+    if (!this.currentProfileKey || !notes.trim()) return;
+    
+    const historyKey = `${this.currentProfileKey}_notes_history`;
+    let history = this.loadNotesHistory();
+    
+    // Remove existing entry for the same date
+    history = history.filter(entry => entry.date !== date);
+    
+    // Add new entry
+    history.unshift({ date, notes });
+    
+    // Keep only last 30 entries
+    history = history.slice(0, 30);
+    
+    localStorage.setItem(historyKey, JSON.stringify(history));
+  }
+
+
+
+  // Format date key for storage
+  formatDateKey(date) {
+    return date.toISOString().split('T')[0];
+  }
+
   init() {
     this.setupEventListeners();
     this.initializeTheme();
@@ -126,15 +516,30 @@ class CalorieTracker {
     }
 
     // Notes saving
-    const saveNotesBtn = document.getElementById('saveNotes');
+    const saveNotesBtn = document.getElementById('saveNotesBtn');
     if (saveNotesBtn) {
       saveNotesBtn.addEventListener('click', () => this.saveNotes());
     }
 
-    // History button - add event listener as backup
-    const historyBtn = document.querySelector('.notes-actions button');
-    if (historyBtn) {
-      historyBtn.addEventListener('click', () => this.showNotesHistory());
+    // Notes history button
+    const notesHistoryBtn = document.getElementById('notesHistoryBtn');
+    if (notesHistoryBtn) {
+      notesHistoryBtn.addEventListener('click', () => this.showNotesHistory());
+    }
+
+    // Calculate My Foods button
+    const calculateFoodsBtn = document.getElementById('calculateFoodsBtn');
+    if (calculateFoodsBtn) {
+      calculateFoodsBtn.addEventListener('click', () => {
+        this.showPage('trackerPage');
+        this.updateUI();
+      });
+    }
+
+    // Tracker history period selector
+    const trackerHistoryPeriod = document.getElementById('trackerHistoryPeriod');
+    if (trackerHistoryPeriod) {
+      trackerHistoryPeriod.addEventListener('change', () => this.updateTrackerHistory());
     }
 
     // Load saved notes
@@ -590,16 +995,15 @@ class CalorieTracker {
     this.dailyNotes = '';
     this.saveDailyEntries();
     
-    console.log('About to show notification and navigate to tracker page');
+    console.log('About to show results on setup page');
     
-    // Update navigation visibility before showing tracker page
+    // Update navigation visibility
     this.updateNavigationVisibility();
     
+    // Show results on setup page
+    this.showSetupResults(formData);
+    
     this.showNotification(translationManager.translate('goal_calculated'));
-    console.log('Calling showPage with trackerPage');
-    this.showPage('trackerPage');
-    console.log('Calling updateUI');
-    this.updateUI();
     console.log('handleSetupSubmit completed successfully');
   }
 
@@ -644,32 +1048,67 @@ class CalorieTracker {
   }
 
   updateSpecificTypes(category) {
-    const specificType = document.getElementById('specificType');
-    if (!specificType) return;
+    const specificTypeContainer = document.getElementById('specificType').parentElement;
+    const oldElement = document.getElementById('specificType');
+    
+    if (!oldElement) return;
 
-    specificType.innerHTML = '';
+    // Remove old element
+    oldElement.remove();
     
     if (!category) {
+      // Create select dropdown for no category
+      const select = document.createElement('select');
+      select.id = 'specificType';
+      select.required = true;
+      select.onchange = () => this.displayRecipe(select.value);
+      
       const option = document.createElement('option');
       option.value = '';
       option.textContent = translationManager.translate('select_category_first');
-      specificType.appendChild(option);
+      select.appendChild(option);
+      
+      specificTypeContainer.appendChild(select);
       return;
     }
 
-    // Add default "Select specific type" option
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = translationManager.translate('select_specific_type');
-    specificType.appendChild(defaultOption);
+    if (category === 'international_cuisines') {
+      // Create text input for International Cuisines
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'specificType';
+      input.required = true;
+      input.placeholder = 'Enter cuisine name (e.g., Pizza, Sushi, Tacos)';
+      input.style.width = '100%';
+      input.style.padding = '0.75rem';
+      input.style.border = '1px solid var(--border-color)';
+      input.style.borderRadius = 'var(--border-radius)';
+      input.style.fontSize = '1rem';
+      
+      specificTypeContainer.appendChild(input);
+    } else {
+      // Create select dropdown for other categories
+      const select = document.createElement('select');
+      select.id = 'specificType';
+      select.required = true;
+      select.onchange = () => this.displayRecipe(select.value);
+      
+      // Add default "Select specific type" option
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = translationManager.translate('select_specific_type');
+      select.appendChild(defaultOption);
 
-    const types = FoodCalculator.getFoodTypes(category);
-    Object.keys(types).forEach(typeKey => {
-      const option = document.createElement('option');
-      option.value = typeKey;
-      option.textContent = types[typeKey].name;
-      specificType.appendChild(option);
-    });
+      const types = FoodCalculator.getFoodTypes(category);
+      Object.keys(types).forEach(typeKey => {
+        const option = document.createElement('option');
+        option.value = typeKey;
+        option.textContent = types[typeKey].name;
+        select.appendChild(option);
+      });
+      
+      specificTypeContainer.appendChild(select);
+    }
     
     // Clear recipe display when category changes
     this.displayRecipe('');
@@ -752,8 +1191,18 @@ class CalorieTracker {
     
     // Reset form
     e.target.reset();
-    document.getElementById('specificType').innerHTML = '<option value="">' + 
-      translationManager.translate('select_category_first') + '</option>';
+    
+    // Reset specificType field properly
+    const specificTypeElement = document.getElementById('specificType');
+    if (specificTypeElement) {
+      if (specificTypeElement.tagName === 'SELECT') {
+        specificTypeElement.innerHTML = '<option value="">' + 
+          translationManager.translate('select_category_first') + '</option>';
+      } else if (specificTypeElement.tagName === 'INPUT') {
+        specificTypeElement.value = '';
+      }
+    }
+    
     document.getElementById('unit').value = ''; // Reset to "Select type"
     
     this.showNotification(translationManager.translate('entry_added'));
@@ -1013,9 +1462,15 @@ class CalorieTracker {
 
   // UI Updates
   updateUI() {
-    this.updateDailySummary();
+    this.updateMetrics();
+    this.updateDailyCalorieGoal();
     this.updateFoodLog();
-    this.updateProgressChart();
+    this.updateTodaysFoodLog();
+    
+    // Update tracker history if on tracker page
+    if (this.currentPage === 'trackerPage') {
+      this.updateTrackerHistory();
+    }
     
     // Update history page if it's currently active
     if (this.currentPage === 'historyPage') {
@@ -1023,75 +1478,77 @@ class CalorieTracker {
     }
   }
 
-  updateDailySummary() {
-    const targetCaloriesEl = document.getElementById('calorieGoalDisplay');
-    const consumedCaloriesEl = document.getElementById('caloriesConsumed');
-    const remainingCaloriesEl = document.getElementById('caloriesRemaining');
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
+  // Update daily calorie goal display
+  updateDailyCalorieGoal() {
+    const goalValueEl = document.getElementById('dailyCalorieGoalValue');
+    
+    if (!goalValueEl) return;
+    
+    if (!this.userProfile || !this.userProfile.targetCalories) {
+      goalValueEl.textContent = '0';
+      return;
+    }
+    
+    goalValueEl.textContent = this.userProfile.targetCalories.toLocaleString();
+  }
 
-    if (!targetCaloriesEl) return;
-
+  // Update metrics section
+  updateMetrics() {
+    const totalConsumedEl = document.getElementById('metricTotalConsumed');
+    const daysConsumedEl = document.getElementById('metricDaysConsumed');
+    const daysRemainingEl = document.getElementById('metricDaysRemaining');
+    const calorieGoalEl = document.getElementById('metricCalorieGoal');
+    
+    if (!totalConsumedEl || !daysConsumedEl || !daysRemainingEl || !calorieGoalEl) return;
+    
     // Check if goals have been calculated
     if (!this.userProfile || !this.userProfile.targetCalories) {
-      // Show blank/0 when no profile setup
-      targetCaloriesEl.textContent = '0';
-      consumedCaloriesEl.textContent = '0';
-      remainingCaloriesEl.textContent = '0';
-      
-      if (progressFill) {
-        progressFill.style.width = '0%';
-        progressFill.className = 'progress-fill';
-      }
-      
-      if (progressText) {
-        progressText.textContent = '0%';
-      }
+      totalConsumedEl.textContent = '0';
+      daysConsumedEl.textContent = '0';
+      daysRemainingEl.textContent = '0';
+      calorieGoalEl.textContent = '0';
       return;
     }
-
-    const totalConsumed = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
-    const remaining = this.targetCalories - totalConsumed;
-    const percentage = Math.min((totalConsumed / this.targetCalories) * 100, 100);
-
-    // Show blank/0 when no activity (no daily entries)
-    if (this.dailyEntries.length === 0) {
-      targetCaloriesEl.textContent = '0';
-      consumedCaloriesEl.textContent = '0';
-      remainingCaloriesEl.textContent = '0';
-      
-      if (progressFill) {
-        progressFill.style.width = '0%';
-        progressFill.className = 'progress-fill';
-      }
-      
-      if (progressText) {
-        progressText.textContent = '0%';
-      }
-      return;
-    }
-
-    targetCaloriesEl.textContent = this.targetCalories;
-    consumedCaloriesEl.textContent = totalConsumed;
-    remainingCaloriesEl.textContent = Math.max(remaining, 0);
     
-    if (progressFill) {
-      progressFill.style.width = percentage + '%';
-      
-      // Update progress bar color based on status
-      progressFill.className = 'progress-fill';
-      if (percentage < 80) {
-        progressFill.classList.add('under-target');
-      } else if (percentage <= 110) {
-        progressFill.classList.add('on-target');
-      } else {
-        progressFill.classList.add('over-target');
+    // Calculate total consumed calories from all history
+    let totalConsumed = 0;
+    let daysWithEntries = 0;
+    
+    // Get all stored daily entries for this profile
+    const profilePrefix = `dailyEntries_${this.currentProfileKey}_`;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(profilePrefix)) {
+        const dayEntries = JSON.parse(localStorage.getItem(key)) || [];
+        if (dayEntries.length > 0) {
+          const dayTotal = dayEntries.reduce((sum, entry) => sum + entry.calories, 0);
+          totalConsumed += dayTotal;
+          daysWithEntries++;
+        }
       }
     }
     
-    if (progressText) {
-      progressText.textContent = Math.round(percentage) + '%';
+    // Add today's entries if not already counted
+    const todayKey = `dailyEntries_${this.currentProfileKey}_${this.getTodayKey()}`;
+    const todayStored = localStorage.getItem(todayKey);
+    if (!todayStored && this.dailyEntries.length > 0) {
+      const todayTotal = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
+      totalConsumed += todayTotal;
+      daysWithEntries++;
     }
+    
+    // Calculate days remaining based on time goal
+    const timeGoalDays = this.getTimeGoalInDays(this.userProfile.timeGoal);
+    const profileCreatedDate = new Date(this.userProfile.createdAt);
+    const today = new Date();
+    const daysSinceStart = Math.floor((today - profileCreatedDate) / (1000 * 60 * 60 * 24));
+    const daysRemaining = Math.max(0, timeGoalDays - daysSinceStart);
+    
+    // Update metric displays
+    totalConsumedEl.textContent = totalConsumed.toLocaleString();
+    daysConsumedEl.textContent = daysWithEntries.toString();
+    daysRemainingEl.textContent = daysRemaining.toString();
+    calorieGoalEl.textContent = this.userProfile.targetCalories.toLocaleString();
   }
 
   updateProgressChart() {
