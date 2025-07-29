@@ -1147,6 +1147,21 @@ body {
   font-size: 1rem;
 }
 
+.remaining-calories {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.remaining-value {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  margin: 0 0.25rem;
+}
+
 /* Enhanced Metrics Section */
 .metrics-section {
   background: var(--bg-primary);
@@ -1166,8 +1181,14 @@ body {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metric-box {
