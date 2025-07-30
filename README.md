@@ -2,6 +2,8 @@
 
 A modern, responsive, and accessible calorie deficit tracking website that supports multi-language usage, daily intake reminders, progress tracking, and personalized calorie management.
 
+**Access Here:** https://jolinajavier02.github.io/Caldef/
+
 ## 🌟 Features
 
 ### 📘 User Calorie Goal Setup
