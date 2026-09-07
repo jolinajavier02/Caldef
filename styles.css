@@ -1457,7 +1457,7 @@ body[data-page="trackerPage"] .logo i {
 }
 
 body[data-page="trackerPage"] .main-content {
-  height: calc(100vh - 3.2rem - 3.3rem);
+  height: calc(100dvh - 3.2rem - 3.3rem);
 }
 
 body[data-page="trackerPage"] .bottom-nav .nav-item {
@@ -1595,14 +1595,18 @@ body[data-page="trackerPage"] .bottom-nav .nav-item {
 .tracker-layout {
   display: grid;
   width: min(1320px, calc(100vw - 2rem));
+  height: 100%;
+  min-height: 0;
   grid-template-columns: minmax(410px, 0.95fr) minmax(520px, 1.05fr);
   gap: 0.7rem;
   padding: 0.65rem 0;
+  align-items: stretch;
   overflow: hidden;
 }
 
 .tracker-left,
 .tracker-right {
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1613,8 +1617,8 @@ body[data-page="trackerPage"] .bottom-nav .nav-item {
 .tracker-dashboard {
   margin-bottom: 0;
   gap: 0.75rem;
-  flex: 1.15 1 0;
-  min-height: 10.5rem;
+  flex: 1 1 13rem;
+  min-height: 12rem;
 }
 
 .dashboard-copy {
@@ -1707,6 +1711,7 @@ body[data-page="trackerPage"] .bottom-nav .nav-item {
 }
 
 body[data-page="trackerPage"] .daily-calorie-goal-section {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(150px, 0.88fr);
   gap: 0.65rem;
@@ -1718,7 +1723,7 @@ body[data-page="trackerPage"] .daily-calorie-goal-section {
 
 body[data-page="trackerPage"] .daily-calorie-goal-section .goal-card,
 body[data-page="trackerPage"] .daily-calorie-goal-section .remaining-card {
-  min-height: 8.2rem;
+  min-height: clamp(8.2rem, 14dvh, 10.6rem);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--surface);
@@ -1794,6 +1799,21 @@ body[data-page="trackerPage"] .dashboard-copy {
   min-height: 0;
 }
 
+body[data-page="trackerPage"] .metrics-section {
+  flex: 0 0 clamp(9.8rem, 17dvh, 12.4rem);
+  display: flex;
+  flex-direction: column;
+}
+
+body[data-page="trackerPage"] .metrics-grid {
+  flex: 1;
+}
+
+body[data-page="trackerPage"] .metric-box {
+  height: 100%;
+  align-content: center;
+}
+
 .dashboard-remaining {
   width: fit-content;
   max-width: 100%;
@@ -1842,6 +1862,9 @@ body[data-page="trackerPage"] .notes-actions i {
 }
 
 body[data-page="trackerPage"] .daily-notes-section {
+  flex: 0 0 clamp(7.3rem, 13dvh, 9.2rem);
+  display: flex;
+  flex-direction: column;
   padding: 0.72rem 1rem 0.78rem;
 }
 
@@ -1850,15 +1873,23 @@ body[data-page="trackerPage"] .daily-notes-section h3 {
 }
 
 body[data-page="trackerPage"] .tracker-left .notes-content textarea {
-  height: 3.55rem;
-  min-height: 3.55rem;
-  max-height: 3.55rem;
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
   resize: none;
 }
 
 body[data-page="trackerPage"] .todays-food-log {
+  flex: 1 1 auto;
+  min-height: 0;
   padding-bottom: 0.75rem;
+}
+
+body[data-page="trackerPage"] .food-entries-container {
+  flex: 1;
+  min-height: 0;
 }
 
 body[data-page="trackerPage"] .todays-food-log .section-header {
@@ -1876,6 +1907,30 @@ body[data-page="trackerPage"] .no-entries {
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+
+body[data-page="trackerPage"] #trackerPage {
+  display: flex;
+  min-height: 0;
+}
+
+body[data-page="trackerPage"] .tracker-layout {
+  flex: 1;
+  max-height: 100%;
+}
+
+body[data-page="trackerPage"] .tracker-left,
+body[data-page="trackerPage"] .tracker-right {
+  align-self: stretch;
+}
+
+body[data-page="trackerPage"] .tracker-right .todays-food-log {
+  height: auto;
+}
+
+body[data-page="trackerPage"] .notes-content {
+  flex: 1;
+  min-height: 0;
 }
 
 /* Setup page planner panel */
