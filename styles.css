@@ -475,17 +475,17 @@ button {
 }
 
 .setup-card .goals-section .goals-row {
-  grid-template-columns: minmax(190px, 0.92fr) minmax(210px, 1.05fr) minmax(230px, 1.12fr);
+  grid-template-columns: minmax(165px, 0.82fr) minmax(155px, 0.72fr) minmax(250px, 1.25fr);
   align-items: end;
 }
 
 .setup-card .goals-section .input-with-unit {
   display: grid;
-  grid-template-columns: minmax(100px, 1fr) 4.25rem;
+  grid-template-columns: minmax(86px, 1fr) 4.25rem;
   gap: 0.45rem;
 }
 
-.setup-card .goals-section .unit-display {
+.setup-card .goals-section #targetWeightUnit {
   min-width: 0;
   padding-inline: 0.75rem;
 }

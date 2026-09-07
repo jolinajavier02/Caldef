@@ -559,7 +559,12 @@ class CalorieTracker {
     const targetWeightUnit = document.getElementById('targetWeightUnit');
     if (weightUnit) {
       weightUnit.addEventListener('change', (e) => {
-        if (targetWeightUnit) targetWeightUnit.textContent = e.target.value;
+        if (targetWeightUnit) targetWeightUnit.value = e.target.value;
+      });
+    }
+    if (targetWeightUnit) {
+      targetWeightUnit.addEventListener('change', (e) => {
+        if (weightUnit) weightUnit.value = e.target.value;
       });
     }
 
@@ -872,7 +877,7 @@ class CalorieTracker {
 
     const targetWeightUnit = document.getElementById('targetWeightUnit');
     if (targetWeightUnit && profile.weightUnit) {
-      targetWeightUnit.textContent = profile.weightUnit;
+      targetWeightUnit.value = profile.weightUnit;
     }
   }
 
