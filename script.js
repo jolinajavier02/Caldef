@@ -2,7 +2,8 @@
 class CalorieTracker {
   constructor() {
     this.currentPage = 'setupPage';
-    this.currentProfileKey = localStorage.getItem('currentProfileKey') || null;
+    this.currentUserEmail = localStorage.getItem('caldefSessionEmail') || null;
+    this.currentProfileKey = this.getCurrentUserProfileKey();
     this.userProfile = this.loadUserProfile();
     this.dailyEntries = this.loadDailyEntries();
     this.dailyNotes = this.loadDailyNotes();
@@ -15,17 +16,55 @@ class CalorieTracker {
   showSetupResults(formData) {
     const setupResults = document.getElementById('setupResults');
     const setupCalorieGoal = document.getElementById('setupCalorieGoal');
+    const setupBmr = document.getElementById('setupBmr');
+    const setupMaintenance = document.getElementById('setupMaintenance');
+    const setupDeficit = document.getElementById('setupDeficit');
+    const setupGuidance = document.getElementById('setupGuidance');
     
     if (setupResults && setupCalorieGoal) {
+      const setupCard = document.getElementById('setupCard');
+      if (setupCard) setupCard.classList.add('results-ready');
       setupCalorieGoal.textContent = formData.targetCalories.toLocaleString();
+      if (setupBmr) setupBmr.textContent = formData.bmr.toLocaleString();
+      if (setupMaintenance) setupMaintenance.textContent = formData.dailyCalories.toLocaleString();
+      if (setupDeficit) setupDeficit.textContent = formData.dailyCalorieAdjustment.toLocaleString();
+      if (setupGuidance) setupGuidance.innerHTML = this.createSetupGuidanceHTML(formData);
       setupResults.style.display = 'block';
       
       // Generate weight progress graph
       this.generateSetupWeightProgressGraph(formData);
       
       // Scroll to results
-      setupResults.scrollIntoView({ behavior: 'smooth' });
+      setupResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+  }
+
+  createSetupGuidanceHTML(formData) {
+    const timelineDays = this.getTimeGoalInDays(formData.timeGoal);
+    const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
+    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.weightUnit);
+    const goalChangeKg = Math.abs(currentWeightKg - targetWeightKg);
+    const weeklyRate = goalChangeKg / (timelineDays / 7);
+    const targetWeightLabel = `${formData.targetWeight.toFixed(1)} ${formData.weightUnit || 'kg'}`;
+    const guidanceType = formData.isAdjustedForSafety ? 'warning' : 'good';
+    const guidanceTitle = formData.isAdjustedForSafety ? 'Safety-adjusted plan' : 'Plan looks on track';
+    const guidanceText = formData.isAdjustedForSafety
+      ? `The selected timeline needs about ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day, so CalDef capped the food deficit at ${formData.dailyCalorieAdjustment.toLocaleString()} calories for safer guidance.`
+      : `This target creates an estimated ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit, aiming for about ${weeklyRate.toFixed(2)} kg per week.`;
+
+    return `
+      <div class="guidance-card ${guidanceType}">
+        <div>
+          <strong>${guidanceTitle}</strong>
+          <p>${guidanceText}</p>
+        </div>
+      </div>
+      <div class="guidance-list">
+        <span><i class="fas fa-scale-balanced"></i> Target weight: ${targetWeightLabel}</span>
+        <span><i class="fas fa-calendar-days"></i> Timeline: ${timelineDays} days</span>
+        <span><i class="fas fa-heart-pulse"></i> Intake is protected by a minimum calorie floor</span>
+      </div>
+    `;
   }
 
   // Generate weight progress graph for setup results
@@ -47,16 +86,17 @@ class CalorieTracker {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const padding = 60;
+    const padding = 58;
     
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
-    
-    // Set styles
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
-    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-    ctx.lineWidth = 3;
-    ctx.font = '12px Inter, sans-serif';
+
+    const styles = getComputedStyle(document.documentElement);
+    const primary = styles.getPropertyValue('--primary-color').trim() || '#7f1d3a';
+    const soft = styles.getPropertyValue('--primary-soft').trim() || '#f9e8ee';
+    const text = styles.getPropertyValue('--text-primary').trim() || '#24151a';
+    const muted = styles.getPropertyValue('--text-secondary').trim() || '#76666c';
+    const border = styles.getPropertyValue('--border-color').trim() || '#eadde1';
     
     const currentWeight = parseFloat(formData.currentWeight);
     const targetWeight = parseFloat(formData.targetWeight);
@@ -65,6 +105,14 @@ class CalorieTracker {
     // Create projected weight loss timeline
     const weightDiff = currentWeight - targetWeight;
     const isWeightLoss = weightDiff > 0;
+    const projectedLossKg = formData.dailyCalorieAdjustment * timeGoalDays / 7700;
+    const projectedLossInUnit = (formData.weightUnit || 'kg') === 'lbs'
+      ? projectedLossKg / 0.453592
+      : projectedLossKg;
+    const projectedEndWeight = isWeightLoss
+      ? Math.max(targetWeight, currentWeight - projectedLossInUnit)
+      : targetWeight;
+    const chartEndWeight = formData.isAdjustedForSafety ? projectedEndWeight : targetWeight;
     
     // Generate data points for the timeline
     const dataPoints = [];
@@ -72,7 +120,7 @@ class CalorieTracker {
     
     for (let i = 0; i <= steps; i++) {
       const progress = i / steps;
-      const projectedWeight = currentWeight - (weightDiff * progress);
+      const projectedWeight = currentWeight - ((currentWeight - chartEndWeight) * progress);
       dataPoints.push({
         day: Math.round((timeGoalDays * progress)),
         weight: projectedWeight,
@@ -82,8 +130,8 @@ class CalorieTracker {
     }
     
     // Calculate weight range for chart
-    const minWeight = Math.min(currentWeight, targetWeight) - 2;
-    const maxWeight = Math.max(currentWeight, targetWeight) + 2;
+    const minWeight = Math.min(currentWeight, targetWeight, chartEndWeight) - 2;
+    const maxWeight = Math.max(currentWeight, targetWeight, chartEndWeight) + 2;
     const weightRange = maxWeight - minWeight;
     
     // Calculate Y positions
@@ -91,12 +139,13 @@ class CalorieTracker {
       point.y = padding + ((maxWeight - point.weight) / weightRange) * (height - 2 * padding);
     });
     
-    // Draw chart background
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = soft;
     ctx.fillRect(padding, padding, width - 2 * padding, height - 2 * padding);
     
     // Draw grid lines
-    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-color');
+    ctx.strokeStyle = border;
     ctx.lineWidth = 1;
     
     // Horizontal grid lines (weight)
@@ -110,7 +159,7 @@ class CalorieTracker {
       ctx.stroke();
       
       // Weight labels
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+      ctx.fillStyle = muted;
       ctx.textAlign = 'right';
       ctx.fillText(weight.toFixed(1) + (formData.weightUnit || 'kg'), padding - 10, y + 4);
     }
@@ -126,14 +175,33 @@ class CalorieTracker {
       ctx.stroke();
       
       // Time labels
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+      ctx.fillStyle = muted;
       ctx.textAlign = 'center';
       ctx.fillText(days + 'd', x, height - padding + 20);
     }
+
+    const areaGradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+    areaGradient.addColorStop(0, 'rgba(127, 29, 58, 0.22)');
+    areaGradient.addColorStop(1, 'rgba(127, 29, 58, 0.02)');
+    ctx.beginPath();
+    dataPoints.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+    ctx.lineTo(dataPoints[dataPoints.length - 1].x, height - padding);
+    ctx.lineTo(dataPoints[0].x, height - padding);
+    ctx.closePath();
+    ctx.fillStyle = areaGradient;
+    ctx.fill();
     
     // Draw projected weight line
-    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = primary;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.beginPath();
     
     dataPoints.forEach((point, index) => {
@@ -146,15 +214,36 @@ class CalorieTracker {
     ctx.stroke();
     
     // Draw data points
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
-    dataPoints.forEach(point => {
+    dataPoints.forEach((point, index) => {
+      ctx.fillStyle = index === dataPoints.length - 1 ? '#1b8a5a' : primary;
       ctx.beginPath();
-      ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, index === 0 || index === dataPoints.length - 1 ? 6 : 3.5, 0, 2 * Math.PI);
       ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     });
+
+    if (formData.isAdjustedForSafety) {
+      const targetY = padding + ((maxWeight - targetWeight) / weightRange) * (height - 2 * padding);
+      ctx.save();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = 'rgba(127, 29, 58, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(padding, targetY);
+      ctx.lineTo(width - padding, targetY);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = muted;
+      ctx.textAlign = 'right';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText(`Selected target: ${targetWeight.toFixed(1)}${formData.weightUnit || 'kg'}`, width - padding, targetY - 8);
+    }
     
     // Draw start and end labels
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-primary');
+    ctx.fillStyle = text;
     ctx.font = 'bold 12px Inter, sans-serif';
     
     // Start weight
@@ -164,7 +253,8 @@ class CalorieTracker {
     // Target weight
     const lastPoint = dataPoints[dataPoints.length - 1];
     ctx.textAlign = 'right';
-    ctx.fillText(`Target: ${targetWeight}${formData.weightUnit || 'kg'}`, lastPoint.x - 10, lastPoint.y - 10);
+    const endLabel = formData.isAdjustedForSafety ? 'Safe projection' : 'Target';
+    ctx.fillText(`${endLabel}: ${chartEndWeight.toFixed(1)}${formData.weightUnit || 'kg'}`, lastPoint.x - 10, lastPoint.y - 10);
   }
 
   // Get time goal in days
@@ -384,7 +474,7 @@ class CalorieTracker {
     this.updateLanguage();
     
     // Load daily data if profile exists
-    if (this.currentProfileKey) {
+    if (this.currentUserEmail && this.currentProfileKey) {
       // Check for day rollover before loading data
       this.checkDayRollover();
       
@@ -402,7 +492,9 @@ class CalorieTracker {
     this.updateNavigationVisibility();
     
     // Show appropriate page based on profile status
-    if (this.userProfile && this.userProfile.targetCalories) {
+    if (!this.currentUserEmail) {
+      this.showPage('loginPage');
+    } else if (this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
       // User has a complete profile, show tracker page
       this.showPage('trackerPage');
       this.updateUI();
@@ -413,16 +505,28 @@ class CalorieTracker {
   }
 
   setupEventListeners() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => this.handleLoginSubmit(e));
+    }
+
     // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', (e) => {
         const page = e.currentTarget.getAttribute('data-page');
-        
-        // Prevent direct access to tracker and history pages if setup is not completed
-        if ((page === 'trackerPage' || page === 'historyPage') && (!this.userProfile || !this.userProfile.targetCalories)) {
+
+        if (page === 'setupPage' && this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
           e.preventDefault();
           e.stopPropagation();
-          this.showNotification('Need to setup the profile first.');
+          this.showNotification('Setup is already complete for this account.');
+          return;
+        }
+        
+        // Prevent direct access until setup is calculated and Track My Calorie is clicked.
+        if ((page === 'trackerPage' || page === 'historyPage') && (!this.userProfile || !this.userProfile.targetCalories || !this.isTrackerUnlocked())) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.showNotification('Calculate your goal first, then click Track My Calorie.');
           return;
         }
         
@@ -437,7 +541,7 @@ class CalorieTracker {
         if (trackerNavItem.classList.contains('disabled')) {
           e.preventDefault();
           e.stopPropagation();
-          this.showNotification('Need to setup the profile first.');
+          this.showNotification('Calculate your goal first, then click Track My Calorie.');
         }
       }, true); // Use capture phase to ensure it fires even with pointer-events: none
     }
@@ -467,9 +571,9 @@ class CalorieTracker {
     // Weight unit synchronization
     const weightUnit = document.getElementById('weightUnit');
     const targetWeightUnit = document.getElementById('targetWeightUnit');
-    if (weightUnit && targetWeightUnit) {
+    if (weightUnit) {
       weightUnit.addEventListener('change', (e) => {
-        targetWeightUnit.textContent = e.target.value;
+        if (targetWeightUnit) targetWeightUnit.textContent = e.target.value;
       });
     }
 
@@ -507,6 +611,7 @@ class CalorieTracker {
     const calculateFoodsBtn = document.getElementById('calculateFoodsBtn');
     if (calculateFoodsBtn) {
       calculateFoodsBtn.addEventListener('click', () => {
+        this.unlockTracker();
         this.showPage('trackerPage');
         this.updateUI();
       });
@@ -554,14 +659,28 @@ class CalorieTracker {
 
   // Update navigation visibility based on profile status
   updateNavigationVisibility() {
+    const setupNavItem = document.getElementById('navSetup');
     const trackerNavItem = document.getElementById('navTracker');
     const historyNavItem = document.getElementById('navHistory');
     
     const isProfileComplete = this.userProfile && this.userProfile.targetCalories;
+    const trackerUnlocked = isProfileComplete && this.isTrackerUnlocked();
+
+    if (setupNavItem) {
+      if (!this.currentUserEmail || trackerUnlocked) {
+        setupNavItem.style.opacity = trackerUnlocked ? '0.5' : '1';
+        setupNavItem.style.pointerEvents = trackerUnlocked ? 'none' : 'auto';
+        setupNavItem.classList.toggle('disabled', trackerUnlocked);
+      } else {
+        setupNavItem.style.opacity = '1';
+        setupNavItem.style.pointerEvents = 'auto';
+        setupNavItem.classList.remove('disabled');
+      }
+    }
     
     // Handle tracker navigation
     if (trackerNavItem) {
-      if (!isProfileComplete) {
+      if (!trackerUnlocked) {
         trackerNavItem.style.opacity = '0.5';
         trackerNavItem.style.pointerEvents = 'none';
         trackerNavItem.classList.add('disabled');
@@ -574,7 +693,7 @@ class CalorieTracker {
     
     // Handle history navigation
     if (historyNavItem) {
-      if (!isProfileComplete) {
+      if (!trackerUnlocked) {
         historyNavItem.style.opacity = '0.5';
         historyNavItem.style.pointerEvents = 'none';
         historyNavItem.classList.add('disabled');
@@ -583,6 +702,88 @@ class CalorieTracker {
         historyNavItem.style.pointerEvents = 'auto';
         historyNavItem.classList.remove('disabled');
       }
+    }
+  }
+
+  getTrackerUnlockKey() {
+    return this.currentProfileKey ? `${this.currentProfileKey}_trackerUnlocked` : null;
+  }
+
+  isTrackerUnlocked() {
+    const key = this.getTrackerUnlockKey();
+    return key ? localStorage.getItem(key) === 'true' : false;
+  }
+
+  unlockTracker() {
+    const key = this.getTrackerUnlockKey();
+    if (key) {
+      localStorage.setItem(key, 'true');
+    }
+    this.updateNavigationVisibility();
+  }
+
+  getUsers() {
+    return JSON.parse(localStorage.getItem('caldefUsers') || '{}');
+  }
+
+  saveUsers(users) {
+    localStorage.setItem('caldefUsers', JSON.stringify(users));
+  }
+
+  getCurrentUserProfileKey() {
+    if (!this.currentUserEmail) return null;
+    const users = this.getUsers();
+    return users[this.currentUserEmail]?.profileKey || null;
+  }
+
+  handleLoginSubmit(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) return;
+
+    const users = this.getUsers();
+    const existingUser = users[email];
+
+    if (existingUser && existingUser.password !== password) {
+      this.showNotification('Password does not match this email.');
+      return;
+    }
+
+    if (!existingUser) {
+      users[email] = {
+        email,
+        password,
+        profileKey: null,
+        createdAt: new Date().toISOString()
+      };
+      this.saveUsers(users);
+    }
+
+    this.currentUserEmail = email;
+    localStorage.setItem('caldefSessionEmail', email);
+    this.currentProfileKey = this.getCurrentUserProfileKey();
+    localStorage.setItem('currentProfileKey', this.currentProfileKey || '');
+    this.userProfile = this.loadUserProfile();
+    this.targetCalories = this.userProfile.targetCalories || 0;
+    this.dailyEntries = this.loadDailyEntries();
+    this.dailyNotes = this.loadDailyNotes();
+    this.updateNavigationVisibility();
+
+    if (this.currentProfileKey && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
+      this.showPage('trackerPage');
+      this.updateUI();
+    } else {
+      this.showPage('setupPage');
+      this.prefillSetupNameFromEmail(email);
+    }
+  }
+
+  prefillSetupNameFromEmail(email) {
+    const nameInput = document.getElementById('userName');
+    if (nameInput && !nameInput.value) {
+      nameInput.value = email.split('@')[0];
     }
   }
 
@@ -595,10 +796,10 @@ class CalorieTracker {
     if (pageId === 'trackerPage') {
       console.log('Handling tracker page navigation');
       // Check if we have a valid profile with calculated goals
-      if (!this.userProfile || !this.userProfile.targetCalories) {
+      if (!this.userProfile || !this.userProfile.targetCalories || !this.isTrackerUnlocked()) {
         console.log('Profile incomplete, redirecting to setup');
         // No valid profile, redirect to setup
-        this.showNotification('Need to setup the profile first.');
+        this.showNotification('Calculate your goal first, then click Track My Calorie.');
         pageId = 'setupPage';
       } else {
         // Load existing daily data for the tracker page
@@ -614,15 +815,19 @@ class CalorieTracker {
     } else if (pageId === 'historyPage') {
       console.log('Handling history page navigation');
       // Check if we have a valid profile with calculated goals
-      if (!this.userProfile || !this.userProfile.targetCalories) {
+      if (!this.userProfile || !this.userProfile.targetCalories || !this.isTrackerUnlocked()) {
         console.log('Profile incomplete, redirecting to setup');
         // No valid profile, redirect to setup
-        this.showNotification('Need to setup the profile first.');
+        this.showNotification('Calculate your goal first, then click Track My Calorie.');
         pageId = 'setupPage';
       } else {
         // Load and display history data
         setTimeout(() => this.updateHistoryPage(), 100);
       }
+    }
+
+    if (pageId === 'setupPage' && this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
+      pageId = 'trackerPage';
     }
 
     // Hide all pages
@@ -635,6 +840,7 @@ class CalorieTracker {
     if (targetPage) {
       targetPage.classList.add('active');
       this.currentPage = pageId;
+      document.body.dataset.page = pageId;
     }
 
     // Update navigation
@@ -648,26 +854,24 @@ class CalorieTracker {
 
   // Theme management
   initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    this.setTheme(savedTheme);
+    this.setTheme('light');
   }
 
   toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    this.setTheme(newTheme);
+    this.setTheme('light');
   }
 
   setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('theme', 'light');
     
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
       const icon = themeToggle.querySelector('i');
       if (icon) {
-        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        icon.className = 'fas fa-sun';
       }
+      themeToggle.setAttribute('aria-label', 'White theme active');
     }
   }
 
@@ -856,9 +1060,13 @@ class CalorieTracker {
       // Update navigation visibility since we now have a profile
       this.updateNavigationVisibility();
       
-      // Navigate to tracker page and update UI
-      this.showPage('trackerPage');
-      this.updateUI();
+      if (this.isTrackerUnlocked()) {
+        this.showPage('trackerPage');
+        this.updateUI();
+      } else {
+        this.showPage('setupPage');
+        this.showSetupResults(this.userProfile);
+      }
       
       this.showNotification(`Welcome back, ${name}!`);
     }
@@ -891,6 +1099,12 @@ class CalorieTracker {
   handleSetupSubmit(e) {
     e.preventDefault();
     console.log('Form submitted - handleSetupSubmit called');
+
+    if (!this.currentUserEmail) {
+      this.showNotification('Please log in before setting up your profile.');
+      this.showPage('loginPage');
+      return;
+    }
     
     const formData = {
       name: document.getElementById('userName').value,
@@ -928,23 +1142,18 @@ class CalorieTracker {
     const totalCaloriesNeeded = weightDifference * 7700;
     const daysToTarget = this.getTimeGoalInDays(formData.timeGoal); // Get actual days from time goal
     const dailyCalorieAdjustment = totalCaloriesNeeded / daysToTarget;
+    const maxRecommendedDeficit = Math.min(1000, Math.round(dailyCalories * 0.3));
+    const safeDeficit = Math.min(dailyCalorieAdjustment, maxRecommendedDeficit);
     
     let targetCalories = dailyCalories;
     if (isWeightLoss) {
       // Weight loss: create deficit
-      targetCalories = dailyCalories - dailyCalorieAdjustment;
+      targetCalories = dailyCalories - safeDeficit;
       // Ensure minimum safe calories (1200 for women, 1500 for men)
       const minCalories = formData.gender === 'female' ? 1200 : 1500;
       targetCalories = Math.max(targetCalories, minCalories);
       
-      // If the required deficit is too extreme, recommend higher activity level
-      if (dailyCalorieAdjustment > 1000) {
-        // Suggest very active lifestyle for aggressive goals
-        const recommendedActivity = 1.725;
-        const newDailyCalories = Math.round(bmr * recommendedActivity);
-        targetCalories = Math.max(newDailyCalories - dailyCalorieAdjustment, minCalories);
-        formData.recommendedActivity = recommendedActivity;
-      }
+      formData.isAdjustedForSafety = dailyCalorieAdjustment > safeDeficit || dailyCalories - safeDeficit < minCalories;
     } else if (weightDifference > 0) {
       // Weight gain: create surplus
       targetCalories = dailyCalories + dailyCalorieAdjustment;
@@ -955,15 +1164,20 @@ class CalorieTracker {
     formData.bmr = bmr;
     formData.dailyCalories = dailyCalories;
     formData.targetCalories = Math.round(targetCalories);
-    formData.dailyCalorieAdjustment = Math.round(dailyCalorieAdjustment);
+    formData.dailyCalorieAdjustment = Math.round(safeDeficit);
+    formData.requiredDailyDeficit = Math.round(dailyCalorieAdjustment);
+    formData.maxRecommendedDeficit = Math.round(maxRecommendedDeficit);
     formData.createdAt = new Date().toISOString();
     
     // Save new profile
     this.currentProfileKey = profileKey;
     localStorage.setItem('currentProfileKey', profileKey);
+    localStorage.setItem(`${profileKey}_trackerUnlocked`, 'false');
+    this.attachProfileToCurrentUser(profileKey);
     this.userProfile = formData;
     this.targetCalories = formData.targetCalories;
     this.saveUserProfile();
+    this.saveRegistrationRecord(profileKey, formData);
     
     // Initialize empty data for new profile
     this.dailyEntries = [];
@@ -1457,12 +1671,14 @@ class CalorieTracker {
   updateDailyCalorieGoal() {
     const goalValueEl = document.getElementById('trackerCalorieGoal');
     const remainingCaloriesEl = document.getElementById('remainingCalories');
+    const dashboardCalorieGoalEl = document.getElementById('dashboardCalorieGoal');
     
     if (!goalValueEl || !remainingCaloriesEl) return;
     
     if (!this.userProfile || !this.userProfile.targetCalories) {
       goalValueEl.textContent = '0';
       remainingCaloriesEl.textContent = '0';
+      if (dashboardCalorieGoalEl) dashboardCalorieGoalEl.textContent = '0';
       return;
     }
     
@@ -1472,6 +1688,7 @@ class CalorieTracker {
     
     goalValueEl.textContent = dailyGoal.toLocaleString();
     remainingCaloriesEl.textContent = remaining.toLocaleString();
+    if (dashboardCalorieGoalEl) dashboardCalorieGoalEl.textContent = dailyGoal.toLocaleString();
   }
 
   // Update metrics section
@@ -1924,6 +2141,41 @@ class CalorieTracker {
     if (this.currentProfileKey) {
       localStorage.setItem(this.currentProfileKey, JSON.stringify(this.userProfile));
     }
+  }
+
+  saveRegistrationRecord(profileKey, profile) {
+    const registrations = JSON.parse(localStorage.getItem('caldefRegistrations') || '[]');
+    const nextRecord = {
+      profileKey,
+      email: this.currentUserEmail,
+      name: profile.name,
+      createdAt: profile.createdAt,
+      targetCalories: profile.targetCalories,
+      currentWeight: profile.currentWeight,
+      targetWeight: profile.targetWeight,
+      weightUnit: profile.weightUnit
+    };
+
+    const withoutDuplicate = registrations.filter(record => record.profileKey !== profileKey);
+    withoutDuplicate.unshift(nextRecord);
+    localStorage.setItem('caldefRegistrations', JSON.stringify(withoutDuplicate));
+  }
+
+  attachProfileToCurrentUser(profileKey) {
+    if (!this.currentUserEmail) return;
+
+    const users = this.getUsers();
+    const existingUser = users[this.currentUserEmail] || {
+      email: this.currentUserEmail,
+      createdAt: new Date().toISOString()
+    };
+
+    users[this.currentUserEmail] = {
+      ...existingUser,
+      profileKey,
+      setupCompletedAt: new Date().toISOString()
+    };
+    this.saveUsers(users);
   }
 
   loadUserProfile() {
