@@ -293,27 +293,14 @@
                                 <span class="dashboard-eyebrow">Today's deficit</span>
                                 <h2>Small choices, visible progress.</h2>
                                 <p data-translate="daily_reminder">Track your meals to stay on target with your calorie goals!</p>
-                            </div>
-                            <div class="dashboard-goal">
-                                <span>Daily goal</span>
-                                <strong id="dashboardCalorieGoal">0</strong>
-                                <small>calories</small>
-                            </div>
-                        </div>
-
-                        <div class="daily-calorie-goal-section">
-                            <div class="goal-card">
-                                <div class="goal-header">
-                                    <h3 data-translate="daily_calorie_goal">Daily Calorie Goal</h3>
-                                    <div class="goal-value" id="trackerCalorieGoal">0</div>
-                                    <p class="goal-subtitle" data-translate="calories_per_day">calories per day</p>
-                                    <div class="remaining-calories">
-                                        <span data-translate="remaining">Remaining:</span>
-                                        <span id="remainingCalories" class="remaining-value">0</span>
-                                        <span data-translate="calories">calories</span>
-                                    </div>
+                                <div class="dashboard-remaining">
+                                    <span data-translate="remaining">Remaining:</span>
+                                    <strong id="remainingCalories">0</strong>
+                                    <span data-translate="calories">calories</span>
                                 </div>
                             </div>
+                            <div id="trackerCalorieGoal" class="sr-only">0</div>
+                            <div id="dashboardCalorieGoal" class="sr-only">0</div>
                         </div>
 
                         <div class="metrics-section">
@@ -352,17 +339,19 @@
                         <div class="daily-notes-section">
                             <div class="notes-header">
                                 <h3 data-translate="daily_notes">Daily Notes</h3>
-                                <button class="btn-secondary" id="notesHistoryBtn">
-                                    <i class="fas fa-history"></i>
-                                    <span data-translate="history">History</span>
-                                </button>
+                                <div class="notes-actions">
+                                    <button class="btn-secondary" id="notesHistoryBtn">
+                                        <i class="fas fa-history"></i>
+                                        <span data-translate="history">History</span>
+                                    </button>
+                                    <button class="btn-primary" id="saveNotesBtn">
+                                        <i class="fas fa-save"></i>
+                                        <span data-translate="save_notes">Save</span>
+                                    </button>
+                                </div>
                             </div>
                             <div class="notes-content">
                                 <textarea id="dailyNotes" placeholder="Add your daily notes, symptoms, or observations..." data-translate-placeholder="notes_placeholder"></textarea>
-                                <button class="btn-primary" id="saveNotesBtn">
-                                    <i class="fas fa-save"></i>
-                                    <span data-translate="save_notes">Save Notes</span>
-                                </button>
                             </div>
                         </div>
                     </div>

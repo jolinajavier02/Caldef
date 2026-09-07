@@ -1675,6 +1675,108 @@ body[data-page="trackerPage"] .nav-item[data-page="setupPage"] {
   pointer-events: none;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Tracker space cleanup */
+body[data-page="trackerPage"] .tracker-dashboard {
+  display: block;
+}
+
+body[data-page="trackerPage"] .dashboard-copy {
+  min-height: 0;
+}
+
+.dashboard-remaining {
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(127, 29, 58, 0.16);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--primary-tint);
+  font-weight: 800;
+}
+
+.dashboard-remaining strong {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+body[data-page="trackerPage"] .daily-calorie-goal-section {
+  display: none;
+}
+
+body[data-page="trackerPage"] .notes-header {
+  gap: 0.75rem;
+}
+
+body[data-page="trackerPage"] .notes-actions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+body[data-page="trackerPage"] .notes-actions .btn-primary,
+body[data-page="trackerPage"] .notes-actions .btn-secondary {
+  width: auto;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.82rem;
+  box-shadow: none;
+}
+
+body[data-page="trackerPage"] .notes-actions i {
+  font-size: 0.85rem;
+}
+
+body[data-page="trackerPage"] .daily-notes-section {
+  padding: 0.85rem 1rem;
+}
+
+body[data-page="trackerPage"] .daily-notes-section h3 {
+  margin-bottom: 0;
+}
+
+body[data-page="trackerPage"] .tracker-left .notes-content textarea {
+  min-height: 4.25rem;
+  max-height: 5.25rem;
+}
+
+body[data-page="trackerPage"] .todays-food-log {
+  padding-bottom: 0.75rem;
+}
+
+body[data-page="trackerPage"] .todays-food-log .section-header {
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+body[data-page="trackerPage"] .food-entries-container {
+  gap: 0;
+}
+
+body[data-page="trackerPage"] .no-entries-message,
+body[data-page="trackerPage"] .no-entries {
+  padding: 0.85rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 /* Setup page planner panel */
 body[data-page="setupPage"] .setup-card {
   width: min(1280px, 100%);
