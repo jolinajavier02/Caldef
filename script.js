@@ -94,180 +94,160 @@ class CalorieTracker {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const padding = Math.max(42, Math.min(54, width * 0.1));
-    
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
-
-    const styles = getComputedStyle(document.documentElement);
-    const primary = styles.getPropertyValue('--primary-color').trim() || '#7f1d3a';
-    const soft = styles.getPropertyValue('--primary-soft').trim() || '#f9e8ee';
-    const text = styles.getPropertyValue('--text-primary').trim() || '#24151a';
-    const muted = styles.getPropertyValue('--text-secondary').trim() || '#76666c';
-    const border = styles.getPropertyValue('--border-color').trim() || '#eadde1';
     
     const currentWeight = parseFloat(formData.currentWeight);
     const targetWeight = parseFloat(formData.targetWeight);
     const timeGoalDays = this.getTimeGoalInDays(formData.timeGoal);
-    
-    // Create projected weight loss timeline
-    const weightDiff = currentWeight - targetWeight;
-    const isWeightLoss = weightDiff > 0;
+    const weightUnit = formData.weightUnit || 'kg';
+    const goalDate = new Date();
+    goalDate.setDate(goalDate.getDate() + timeGoalDays);
+    const goalDateLabel = goalDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
+    const isWeightLoss = currentWeight > targetWeight;
     const projectedLossKg = formData.dailyCalorieAdjustment * timeGoalDays / 7700;
-    const projectedLossInUnit = (formData.weightUnit || 'kg') === 'lbs'
-      ? projectedLossKg / 0.453592
-      : projectedLossKg;
+    const projectedLossInUnit = weightUnit === 'lbs' ? projectedLossKg / 0.453592 : projectedLossKg;
     const projectedEndWeight = isWeightLoss
       ? Math.max(targetWeight, currentWeight - projectedLossInUnit)
       : targetWeight;
     const chartEndWeight = formData.isAdjustedForSafety ? projectedEndWeight : targetWeight;
-    
-    // Generate data points for the timeline
-    const dataPoints = [];
-    const steps = Math.min(timeGoalDays / 7, 20); // Weekly steps, max 20 points
-    
-    for (let i = 0; i <= steps; i++) {
-      const progress = i / steps;
-      const projectedWeight = currentWeight - ((currentWeight - chartEndWeight) * progress);
-      dataPoints.push({
-        day: Math.round((timeGoalDays * progress)),
-        weight: projectedWeight,
-        x: padding + (progress * (width - 2 * padding)),
-        y: 0 // Will be calculated based on weight range
-      });
-    }
-    
-    // Calculate weight range for chart
-    const minWeight = Math.min(currentWeight, targetWeight, chartEndWeight) - 2;
-    const maxWeight = Math.max(currentWeight, targetWeight, chartEndWeight) + 2;
-    const weightRange = maxWeight - minWeight;
-    const plotTop = padding * 0.72;
-    const plotBottom = height - padding * 0.73;
-    const plotHeight = plotBottom - plotTop;
-    
-    // Calculate Y positions
-    dataPoints.forEach(point => {
-      point.y = plotTop + ((maxWeight - point.weight) / weightRange) * plotHeight;
-    });
-    
+
+    const styles = getComputedStyle(document.documentElement);
+    const primary = styles.getPropertyValue('--primary-color').trim() || '#7f1d3a';
+    const text = styles.getPropertyValue('--text-primary').trim() || '#24151a';
+    const muted = styles.getPropertyValue('--text-secondary').trim() || '#76666c';
+    const success = styles.getPropertyValue('--success-color').trim() || '#1b8a5a';
+    const warning = '#f0ae1a';
+    const danger = '#f43f5e';
+
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = soft;
-    ctx.fillRect(padding, plotTop, width - 2 * padding, plotHeight);
-    
-    // Draw grid lines
-    ctx.strokeStyle = border;
-    ctx.lineWidth = 1;
-    
-    // Horizontal grid lines (weight)
-    for (let i = 0; i <= 4; i++) {
-      const y = plotTop + (i / 4) * plotHeight;
-      const weight = maxWeight - (i / 4) * weightRange;
-      
-      ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(width - padding, y);
-      ctx.stroke();
-      
-      // Weight labels
-      ctx.fillStyle = muted;
-      ctx.textAlign = 'right';
-      ctx.font = '11px Inter, sans-serif';
-      ctx.fillText(weight.toFixed(1) + (formData.weightUnit || 'kg'), padding - 10, y + 4);
-    }
-    
-    // Vertical grid lines (time)
-    for (let i = 0; i <= 4; i++) {
-      const x = padding + (i / 4) * (width - 2 * padding);
-      const days = Math.round((i / 4) * timeGoalDays);
-      
-      ctx.beginPath();
-      ctx.moveTo(x, plotTop);
-      ctx.lineTo(x, plotBottom);
-      ctx.stroke();
-      
-      // Time labels
-      ctx.fillStyle = muted;
-      ctx.textAlign = 'center';
-      ctx.font = '11px Inter, sans-serif';
-      ctx.fillText(days + 'd', x, height - padding * 0.38);
-    }
 
-    const areaGradient = ctx.createLinearGradient(0, plotTop, 0, plotBottom);
-    areaGradient.addColorStop(0, 'rgba(127, 29, 58, 0.22)');
-    areaGradient.addColorStop(1, 'rgba(127, 29, 58, 0.02)');
-    ctx.beginPath();
-    dataPoints.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
+    const titleY = 26;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = text;
+    ctx.font = '800 20px Inter, sans-serif';
+    ctx.fillText('Based on your answers,', width / 2, titleY);
+    ctx.font = '800 22px Inter, sans-serif';
+    ctx.fillText(`${formData.name || 'you'}, we predict you'll be`, width / 2, titleY + 34);
+    ctx.fillStyle = success;
+    ctx.font = '900 25px Inter, sans-serif';
+    ctx.fillText(`${targetWeight.toFixed(0)} ${weightUnit} by ${goalDateLabel}`, width / 2, titleY + 70);
+
+    const plotLeft = Math.max(54, width * 0.1);
+    const plotRight = width - Math.max(54, width * 0.1);
+    const plotTop = Math.max(116, height * 0.42);
+    const plotBottom = height - 38;
+    const pointCount = 4;
+    const points = Array.from({ length: pointCount }, (_, index) => {
+      const progress = index / (pointCount - 1);
+      const ease = 1 - Math.pow(1 - progress, 1.35);
+      return {
+        x: plotLeft + (plotRight - plotLeft) * progress,
+        y: plotTop + (plotBottom - plotTop) * ease * 0.66,
+        weight: currentWeight + (chartEndWeight - currentWeight) * progress
+      };
     });
-    ctx.lineTo(dataPoints[dataPoints.length - 1].x, plotBottom);
-    ctx.lineTo(dataPoints[0].x, plotBottom);
-    ctx.closePath();
-    ctx.fillStyle = areaGradient;
-    ctx.fill();
-    
-    // Draw projected weight line
-    ctx.strokeStyle = primary;
-    ctx.lineWidth = 4;
+
+    points.forEach(point => {
+      ctx.save();
+      ctx.setLineDash([3, 9]);
+      ctx.strokeStyle = '#d8d2d6';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(point.x, plotTop - 36);
+      ctx.lineTo(point.x, plotBottom + 3);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    const gradient = ctx.createLinearGradient(plotLeft, 0, plotRight, 0);
+    gradient.addColorStop(0, danger);
+    gradient.addColorStop(0.36, '#f59e0b');
+    gradient.addColorStop(0.68, '#9bb84b');
+    gradient.addColorStop(1, success);
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    
-    dataPoints.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
-    });
+    ctx.moveTo(points[0].x, points[0].y);
+    ctx.bezierCurveTo(
+      points[0].x + 90, points[0].y - 2,
+      points[1].x - 65, points[1].y - 34,
+      points[1].x, points[1].y
+    );
+    ctx.bezierCurveTo(
+      points[1].x + 88, points[1].y + 44,
+      points[2].x - 72, points[2].y + 18,
+      points[2].x, points[2].y
+    );
+    ctx.bezierCurveTo(
+      points[2].x + 74, points[2].y + 20,
+      points[3].x - 88, points[3].y + 6,
+      points[3].x, points[3].y
+    );
     ctx.stroke();
-    
-    // Draw data points
-    dataPoints.forEach((point, index) => {
-      ctx.fillStyle = index === dataPoints.length - 1 ? '#1b8a5a' : primary;
+
+    const dotColors = [danger, warning, warning, success];
+    points.forEach((point, index) => {
+      if (index === points.length - 1) {
+        ctx.fillStyle = 'rgba(27, 138, 90, 0.16)';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 22, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = dotColors[index];
       ctx.beginPath();
-      ctx.arc(point.x, point.y, index === 0 || index === dataPoints.length - 1 ? 6 : 3.5, 0, 2 * Math.PI);
+      ctx.arc(point.x, point.y, index === points.length - 1 ? 10 : 8, 0, 2 * Math.PI);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = index === points.length - 1 ? 7 : 5;
       ctx.stroke();
+
+      if (index < points.length - 1) {
+        ctx.fillStyle = dotColors[index];
+        ctx.textAlign = index === 0 ? 'left' : 'center';
+        ctx.font = '700 16px Inter, sans-serif';
+        ctx.fillText(`${point.weight.toFixed(0)} ${weightUnit}`, point.x - (index === 0 ? 4 : 0), point.y - 24);
+      }
     });
 
-    if (formData.isAdjustedForSafety) {
-      const targetY = plotTop + ((maxWeight - targetWeight) / weightRange) * plotHeight;
-      ctx.save();
-      ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = 'rgba(127, 29, 58, 0.45)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(padding, targetY);
-      ctx.lineTo(width - padding, targetY);
-      ctx.stroke();
-      ctx.restore();
+    const lastPoint = points[points.length - 1];
+    const bubbleWidth = 82;
+    const bubbleHeight = 48;
+    ctx.fillStyle = success;
+    ctx.beginPath();
+    ctx.roundRect(lastPoint.x - bubbleWidth / 2, lastPoint.y - 84, bubbleWidth, bubbleHeight, 6);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x - 10, lastPoint.y - 36);
+    ctx.lineTo(lastPoint.x, lastPoint.y - 23);
+    ctx.lineTo(lastPoint.x + 10, lastPoint.y - 36);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.font = '800 18px Inter, sans-serif';
+    ctx.fillText('Goal', lastPoint.x, lastPoint.y - 61);
+    ctx.font = '700 17px Inter, sans-serif';
+    ctx.fillText(`${targetWeight.toFixed(0)} ${weightUnit}`, lastPoint.x, lastPoint.y - 40);
 
+    const startDate = new Date();
+    const labels = points.map((_, index) => {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + Math.round(timeGoalDays * (index / (pointCount - 1))));
+      return index === 0 ? 'Now' : date.toLocaleDateString('en-US', { month: 'short' });
+    });
+
+    labels.forEach((label, index) => {
       ctx.fillStyle = muted;
-      ctx.textAlign = 'right';
-      ctx.font = '12px Inter, sans-serif';
-      ctx.fillText(`Selected target: ${targetWeight.toFixed(1)}${formData.weightUnit || 'kg'}`, width - padding, targetY - 8);
-    }
-    
-    // Draw start and end labels
-    ctx.fillStyle = text;
-    ctx.font = 'bold 12px Inter, sans-serif';
-    
-    // Start weight
-    ctx.textAlign = 'left';
-    ctx.fillText(`Start: ${currentWeight}${formData.weightUnit || 'kg'}`, dataPoints[0].x + 8, dataPoints[0].y - 8);
-    
-    // Target weight
-    const lastPoint = dataPoints[dataPoints.length - 1];
-    ctx.textAlign = 'right';
-    const endLabel = formData.isAdjustedForSafety ? 'Safe projection' : 'Target';
-    ctx.fillText(`${endLabel}: ${chartEndWeight.toFixed(1)}${formData.weightUnit || 'kg'}`, lastPoint.x - 8, lastPoint.y - 8);
+      ctx.textAlign = 'center';
+      ctx.font = '14px Inter, sans-serif';
+      ctx.fillText(label, points[index].x, height - 8);
+    });
   }
 
   // Get time goal in days
@@ -527,13 +507,6 @@ class CalorieTracker {
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', (e) => {
         const page = e.currentTarget.getAttribute('data-page');
-
-        if (page === 'setupPage' && this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
-          e.preventDefault();
-          e.stopPropagation();
-          this.showNotification('Setup is already complete for this account.');
-          return;
-        }
         
         // Prevent direct access until setup is calculated and Track My Calorie is clicked.
         if ((page === 'trackerPage' || page === 'historyPage') && (!this.userProfile || !this.userProfile.targetCalories || !this.isTrackerUnlocked())) {
@@ -680,10 +653,10 @@ class CalorieTracker {
     const trackerUnlocked = isProfileComplete && this.isTrackerUnlocked();
 
     if (setupNavItem) {
-      if (!this.currentUserEmail || trackerUnlocked) {
-        setupNavItem.style.opacity = trackerUnlocked ? '0.5' : '1';
-        setupNavItem.style.pointerEvents = trackerUnlocked ? 'none' : 'auto';
-        setupNavItem.classList.toggle('disabled', trackerUnlocked);
+      if (!this.currentUserEmail) {
+        setupNavItem.style.opacity = '0.5';
+        setupNavItem.style.pointerEvents = 'none';
+        setupNavItem.classList.add('disabled');
       } else {
         setupNavItem.style.opacity = '1';
         setupNavItem.style.pointerEvents = 'auto';
@@ -839,10 +812,6 @@ class CalorieTracker {
       }
     }
 
-    if (pageId === 'setupPage' && this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
-      pageId = 'trackerPage';
-    }
-
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => {
       page.classList.remove('active');
@@ -856,6 +825,10 @@ class CalorieTracker {
       document.body.dataset.page = pageId;
     }
 
+    if (pageId === 'setupPage') {
+      this.prepareSetupForEditing();
+    }
+
     // Update navigation
     document.querySelectorAll('.nav-item').forEach(item => {
       item.classList.remove('active');
@@ -863,6 +836,44 @@ class CalorieTracker {
         item.classList.add('active');
       }
     });
+  }
+
+  prepareSetupForEditing() {
+    const setupCard = document.getElementById('setupCard');
+    const setupResults = document.getElementById('setupResults');
+
+    if (setupCard) setupCard.classList.remove('results-ready');
+    if (setupResults) setupResults.style.display = 'none';
+    if (this.userProfile && this.userProfile.name) {
+      this.populateSetupForm(this.userProfile);
+    }
+  }
+
+  populateSetupForm(profile) {
+    const fieldValues = {
+      userName: profile.name,
+      gender: profile.gender,
+      age: profile.age,
+      height: profile.height,
+      heightUnit: profile.heightUnit,
+      currentWeight: profile.currentWeight,
+      weightUnit: profile.weightUnit,
+      targetWeight: profile.targetWeight,
+      timeGoal: profile.timeGoal,
+      activityLevel: profile.activityLevel
+    };
+
+    Object.entries(fieldValues).forEach(([id, value]) => {
+      const field = document.getElementById(id);
+      if (field && value !== undefined && value !== null) {
+        field.value = value;
+      }
+    });
+
+    const targetWeightUnit = document.getElementById('targetWeightUnit');
+    if (targetWeightUnit && profile.weightUnit) {
+      targetWeightUnit.textContent = profile.weightUnit;
+    }
   }
 
   // Theme management

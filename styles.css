@@ -1594,7 +1594,7 @@ body[data-page="trackerPage"] .bottom-nav .nav-item {
 
 .tracker-layout {
   display: grid;
-  width: min(1320px, calc(100vw - 2rem));
+  width: min(1180px, calc(100vw - 2rem));
   height: 100%;
   min-height: 0;
   grid-template-columns: minmax(410px, 0.95fr) minmax(520px, 1.05fr);
@@ -1617,8 +1617,8 @@ body[data-page="trackerPage"] .bottom-nav .nav-item {
 .tracker-dashboard {
   margin-bottom: 0;
   gap: 0.75rem;
-  flex: 1 1 13rem;
-  min-height: 12rem;
+  flex: 0 0 clamp(9rem, 21dvh, 12.4rem);
+  min-height: 0;
 }
 
 .dashboard-copy {
@@ -1631,7 +1631,7 @@ body[data-page="trackerPage"] .bottom-nav .nav-item {
 
 .dashboard-copy h2 {
   max-width: 18ch;
-  font-size: clamp(1.95rem, 3.1vw, 3rem);
+  font-size: clamp(1.75rem, 2.65vw, 2.65rem);
 }
 
 .dashboard-copy p {
@@ -1723,7 +1723,7 @@ body[data-page="trackerPage"] .daily-calorie-goal-section {
 
 body[data-page="trackerPage"] .daily-calorie-goal-section .goal-card,
 body[data-page="trackerPage"] .daily-calorie-goal-section .remaining-card {
-  min-height: clamp(8.2rem, 14dvh, 10.6rem);
+  min-height: clamp(6.6rem, 10.5dvh, 8.2rem);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--surface);
@@ -1742,7 +1742,7 @@ body[data-page="trackerPage"] .daily-calorie-goal-section h3 {
 }
 
 body[data-page="trackerPage"] .daily-calorie-goal-section .goal-value {
-  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-size: clamp(2rem, 3.35vw, 2.85rem);
   line-height: 1;
 }
 
@@ -1768,14 +1768,9 @@ body[data-page="trackerPage"] .daily-calorie-goal-section .remaining-unit {
 
 body[data-page="trackerPage"] .daily-calorie-goal-section .remaining-value {
   color: #ffffff;
-  font-size: clamp(2rem, 3.3vw, 3rem);
+  font-size: clamp(1.9rem, 3.05vw, 2.7rem);
   font-weight: 900;
   line-height: 1;
-}
-
-body[data-page="trackerPage"] .nav-item[data-page="setupPage"] {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 .sr-only {
@@ -1800,7 +1795,7 @@ body[data-page="trackerPage"] .dashboard-copy {
 }
 
 body[data-page="trackerPage"] .metrics-section {
-  flex: 0 0 clamp(9.8rem, 17dvh, 12.4rem);
+  flex: 0 0 clamp(7.4rem, 12dvh, 8.9rem);
   display: flex;
   flex-direction: column;
 }
@@ -1812,6 +1807,57 @@ body[data-page="trackerPage"] .metrics-grid {
 body[data-page="trackerPage"] .metric-box {
   height: 100%;
   align-content: center;
+}
+
+.habit-cards {
+  flex: 0 0 clamp(6.2rem, 10.5dvh, 8.3rem);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1.18fr 0.91fr 0.91fr;
+  gap: 0.6rem;
+}
+
+.habit-card {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary-color);
+  box-shadow: 0 12px 25px rgba(58, 24, 35, 0.13);
+}
+
+.habit-card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: brightness(0.72) saturate(1.02);
+  transform: scale(1.03);
+}
+
+.habit-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(36, 21, 26, 0.03), rgba(36, 21, 26, 0.62)),
+    linear-gradient(90deg, rgba(127, 29, 58, 0.18), transparent);
+}
+
+.habit-card figcaption {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  left: 0.55rem;
+  z-index: 1;
+  color: #ffffff;
+  font-size: clamp(0.68rem, 0.75vw, 0.82rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: left;
+  text-shadow: 0 2px 12px rgba(36, 21, 26, 0.5);
+  text-transform: uppercase;
 }
 
 .dashboard-remaining {
@@ -1862,7 +1908,8 @@ body[data-page="trackerPage"] .notes-actions i {
 }
 
 body[data-page="trackerPage"] .daily-notes-section {
-  flex: 0 0 clamp(7.3rem, 13dvh, 9.2rem);
+  flex: 1 1 clamp(5.2rem, 8.8dvh, 6.6rem);
+  min-height: 5rem;
   display: flex;
   flex-direction: column;
   padding: 0.72rem 1rem 0.78rem;
@@ -1911,12 +1958,16 @@ body[data-page="trackerPage"] .no-entries {
 
 body[data-page="trackerPage"] #trackerPage {
   display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 0;
+  padding: 0.4rem 0 1.1rem;
 }
 
 body[data-page="trackerPage"] .tracker-layout {
-  flex: 1;
-  max-height: 100%;
+  flex: 0 1 auto;
+  max-height: calc(100% - 1.5rem);
+  margin: 0 auto;
 }
 
 body[data-page="trackerPage"] .tracker-left,
@@ -1931,6 +1982,21 @@ body[data-page="trackerPage"] .tracker-right .todays-food-log {
 body[data-page="trackerPage"] .notes-content {
   flex: 1;
   min-height: 0;
+}
+
+body[data-page="trackerPage"] .app-container {
+  height: 100dvh;
+  min-height: 0;
+}
+
+body[data-page="trackerPage"] .main-content,
+body[data-page="trackerPage"] #trackerPage {
+  min-height: 0;
+}
+
+body[data-page="trackerPage"] .tracker-layout {
+  width: min(1180px, calc(100vw - 3rem));
+  height: calc(100% - 1.5rem);
 }
 
 /* Setup page planner panel */
@@ -2065,13 +2131,17 @@ body[data-page="setupPage"] .setup-card.results-ready {
 }
 
 .result-chart-card h4 {
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-align: center;
 }
 
 .setup-card.results-ready .chart-container {
-  min-height: 245px;
+  min-height: 285px;
   margin-top: 0.35rem;
-  padding: 0.5rem;
+  padding: 0.25rem;
+  background: #ffffff;
 }
 
 .setup-card.results-ready .chart-placeholder {
