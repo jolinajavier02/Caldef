@@ -9,6 +9,8 @@ class CalorieTracker {
     this.dailyEntries = this.loadDailyEntries();
     this.dailyNotes = this.loadDailyNotes();
     this.targetCalories = this.userProfile.targetCalories || 0;
+    this.dbName = 'CalDefDatabase';
+    this.dbVersion = 1;
     
     this.init();
   }
@@ -297,7 +299,7 @@ class CalorieTracker {
     if (!container || !totalCaloriesElement) return;
     
     // Get today's entries
-    const todayEntries = this.dailyEntries || [];
+    const todayEntries = this.sortEntriesNewestFirst(this.dailyEntries);
     
     // Calculate total calories
     const totalCalories = todayEntries.reduce((sum, entry) => sum + entry.calories, 0);
@@ -471,7 +473,7 @@ class CalorieTracker {
     return date.toISOString().split('T')[0];
   }
 
-  init() {
+  async init() {
     this.setupEventListeners();
     this.initializeTheme();
     this.updateFoodCategoryOptions();
@@ -479,10 +481,12 @@ class CalorieTracker {
     
     // Load daily data if profile exists
     if (this.currentUserEmail && this.currentProfileKey) {
+      await this.hydrateDailyDataFromDatabase();
+
       // Check for day rollover before loading data
       this.checkDayRollover();
       
-      this.dailyEntries = this.loadDailyEntries();
+      await this.hydrateDailyDataFromDatabase();
       this.dailyNotes = this.loadDailyNotes();
       
       // Load notes into textarea
@@ -808,6 +812,7 @@ class CalorieTracker {
         // Load existing daily data for the tracker page
         this.dailyEntries = this.loadDailyEntries();
         this.dailyNotes = this.loadDailyNotes();
+        this.hydrateDailyDataFromDatabase().then(() => this.updateUI());
         
         // Load notes into textarea
         const dailyNotesTextarea = document.getElementById('dailyNotes');
@@ -1422,7 +1427,7 @@ class CalorieTracker {
       timestamp: new Date().toISOString()
     };
 
-    this.dailyEntries.push(entry);
+    this.dailyEntries.unshift(entry);
     this.saveDailyEntries();
     
     // Check if daily calorie limit is exceeded
@@ -2191,6 +2196,83 @@ class CalorieTracker {
     document.body.insertAdjacentHTML('beforeend', historyHtml);
   }
 
+  openDatabase() {
+    if (!('indexedDB' in window)) {
+      return Promise.reject(new Error('IndexedDB is not available'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.dbVersion);
+
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('dailyEntries')) {
+          db.createObjectStore('dailyEntries', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('dailyHistory')) {
+          db.createObjectStore('dailyHistory', { keyPath: 'id' });
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async writeDatabaseRecord(storeName, record) {
+    const db = await this.openDatabase();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, 'readwrite');
+      transaction.objectStore(storeName).put(record);
+      transaction.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      transaction.onerror = () => {
+        db.close();
+        reject(transaction.error);
+      };
+    });
+  }
+
+  async readDatabaseRecord(storeName, id) {
+    const db = await this.openDatabase();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, 'readonly');
+      const request = transaction.objectStore(storeName).get(id);
+      request.onsuccess = () => resolve(request.result || null);
+      transaction.oncomplete = () => db.close();
+      transaction.onerror = () => {
+        db.close();
+        reject(transaction.error);
+      };
+    });
+  }
+
+  sortEntriesNewestFirst(entries) {
+    return [...(entries || [])].sort((a, b) => {
+      const bTime = new Date(b.timestamp || b.id || 0).getTime();
+      const aTime = new Date(a.timestamp || a.id || 0).getTime();
+      return bTime - aTime;
+    });
+  }
+
+  async hydrateDailyDataFromDatabase() {
+    if (!this.currentProfileKey) return;
+
+    try {
+      const record = await this.readDatabaseRecord('dailyEntries', `${this.currentProfileKey}_${this.getTodayKey()}`);
+      if (record && Array.isArray(record.entries)) {
+        this.dailyEntries = this.sortEntriesNewestFirst(record.entries);
+        localStorage.setItem(`${this.currentProfileKey}_entries_${this.getTodayKey()}`, JSON.stringify(this.dailyEntries));
+      }
+    } catch (error) {
+      console.warn('Using local food log storage fallback:', error);
+    }
+  }
+
   // Data persistence
   saveUserProfile() {
     if (this.currentProfileKey) {
@@ -2245,7 +2327,15 @@ class CalorieTracker {
   saveDailyEntries() {
     if (this.currentProfileKey) {
       const key = `${this.currentProfileKey}_entries_${this.getTodayKey()}`;
+      this.dailyEntries = this.sortEntriesNewestFirst(this.dailyEntries);
       localStorage.setItem(key, JSON.stringify(this.dailyEntries));
+      this.writeDatabaseRecord('dailyEntries', {
+        id: `${this.currentProfileKey}_${this.getTodayKey()}`,
+        profileKey: this.currentProfileKey,
+        date: this.getTodayKey(),
+        entries: [...this.dailyEntries],
+        updatedAt: new Date().toISOString()
+      }).catch(error => console.warn('Food log database save failed:', error));
       
       // Also save to history for long-term storage
       this.saveDailyHistory();
@@ -2262,6 +2352,9 @@ class CalorieTracker {
       
       // Update today's entry
       existingHistory[today] = {
+        id: `${this.currentProfileKey}_${today}`,
+        profileKey: this.currentProfileKey,
+        date: today,
         entries: [...this.dailyEntries],
         notes: this.loadDailyNotes(),
         timestamp: new Date().toISOString()
@@ -2269,6 +2362,8 @@ class CalorieTracker {
       
       // Save updated history
       localStorage.setItem(historyKey, JSON.stringify(existingHistory));
+      this.writeDatabaseRecord('dailyHistory', existingHistory[today])
+        .catch(error => console.warn('History database save failed:', error));
     }
   }
 
@@ -2284,7 +2379,7 @@ class CalorieTracker {
     if (this.currentProfileKey) {
       const key = `${this.currentProfileKey}_entries_${this.getTodayKey()}`;
       const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : [];
+      return saved ? this.sortEntriesNewestFirst(JSON.parse(saved)) : [];
     }
     return [];
   }

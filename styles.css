@@ -1981,6 +1981,8 @@ body[data-page="trackerPage"] .todays-food-log {
 body[data-page="trackerPage"] .food-entries-container {
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 body[data-page="trackerPage"] .todays-food-log .section-header {
