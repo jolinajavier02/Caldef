@@ -1813,7 +1813,7 @@ body[data-page="trackerPage"] .metric-box {
   flex: 0 0 clamp(6.2rem, 10.5dvh, 8.3rem);
   min-height: 0;
   display: grid;
-  grid-template-columns: 1.18fr 0.91fr 0.91fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.6rem;
 }
 
@@ -1855,9 +1855,24 @@ body[data-page="trackerPage"] .metric-box {
   font-size: clamp(0.68rem, 0.75vw, 0.82rem);
   font-weight: 900;
   line-height: 1.15;
-  text-align: left;
+  text-align: center;
   text-shadow: 0 2px 12px rgba(36, 21, 26, 0.5);
   text-transform: uppercase;
+}
+
+.habit-card strong,
+.habit-card span {
+  display: block;
+}
+
+.habit-card strong {
+  font-size: clamp(0.76rem, 0.95vw, 0.96rem);
+  letter-spacing: 0.04em;
+}
+
+.habit-card span {
+  margin-top: 0.12rem;
+  font-size: clamp(0.58rem, 0.68vw, 0.72rem);
 }
 
 .dashboard-remaining {
@@ -2312,6 +2327,10 @@ body[data-page="loginPage"] .gallery-card span {
 
   .result-metrics {
     grid-template-columns: 1fr;
+  }
+
+  body[data-page="trackerPage"] .habit-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
