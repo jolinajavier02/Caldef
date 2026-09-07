@@ -83,7 +83,7 @@ class CalorieTracker {
     if (chartContainer) {
       const rect = chartContainer.getBoundingClientRect();
       canvas.width = Math.max(360, Math.floor(rect.width - 24));
-      canvas.height = Math.max(190, Math.min(260, Math.floor(rect.height - 24)));
+      canvas.height = Math.max(170, Math.min(210, Math.floor(rect.height - 24)));
     }
     
     this.drawSetupProgressChart(canvas, formData);
@@ -100,9 +100,6 @@ class CalorieTracker {
     const targetWeight = parseFloat(formData.targetWeight);
     const timeGoalDays = this.getTimeGoalInDays(formData.timeGoal);
     const weightUnit = formData.weightUnit || 'kg';
-    const goalDate = new Date();
-    goalDate.setDate(goalDate.getDate() + timeGoalDays);
-    const goalDateLabel = goalDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
     const isWeightLoss = currentWeight > targetWeight;
     const projectedLossKg = formData.dailyCalorieAdjustment * timeGoalDays / 7700;
@@ -113,8 +110,6 @@ class CalorieTracker {
     const chartEndWeight = formData.isAdjustedForSafety ? projectedEndWeight : targetWeight;
 
     const styles = getComputedStyle(document.documentElement);
-    const primary = styles.getPropertyValue('--primary-color').trim() || '#7f1d3a';
-    const text = styles.getPropertyValue('--text-primary').trim() || '#24151a';
     const muted = styles.getPropertyValue('--text-secondary').trim() || '#76666c';
     const success = styles.getPropertyValue('--success-color').trim() || '#1b8a5a';
     const warning = '#f0ae1a';
@@ -123,21 +118,10 @@ class CalorieTracker {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    const titleY = 26;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = text;
-    ctx.font = '800 20px Inter, sans-serif';
-    ctx.fillText('Based on your answers,', width / 2, titleY);
-    ctx.font = '800 22px Inter, sans-serif';
-    ctx.fillText(`${formData.name || 'you'}, we predict you'll be`, width / 2, titleY + 34);
-    ctx.fillStyle = success;
-    ctx.font = '900 25px Inter, sans-serif';
-    ctx.fillText(`${targetWeight.toFixed(0)} ${weightUnit} by ${goalDateLabel}`, width / 2, titleY + 70);
-
     const plotLeft = Math.max(54, width * 0.1);
     const plotRight = width - Math.max(54, width * 0.1);
-    const plotTop = Math.max(116, height * 0.42);
-    const plotBottom = height - 38;
+    const plotTop = Math.max(46, height * 0.22);
+    const plotBottom = height - 34;
     const pointCount = 4;
     const points = Array.from({ length: pointCount }, (_, index) => {
       const progress = index / (pointCount - 1);
@@ -238,7 +222,7 @@ class CalorieTracker {
     const startDate = new Date();
     const labels = points.map((_, index) => {
       const date = new Date(startDate);
-      date.setDate(date.getDate() + Math.round(timeGoalDays * (index / (pointCount - 1))));
+      date.setDate(startDate.getDate() + Math.round(timeGoalDays * (index / (pointCount - 1))));
       return index === 0 ? 'Now' : date.toLocaleDateString('en-US', { month: 'short' });
     });
 
