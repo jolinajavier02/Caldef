@@ -32,7 +32,7 @@ class CalorieTracker {
       setupResults.style.display = 'block';
       
       // Generate weight progress graph
-      this.generateSetupWeightProgressGraph(formData);
+      requestAnimationFrame(() => this.generateSetupWeightProgressGraph(formData));
       
       // Scroll to results
       setupResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -77,6 +77,13 @@ class CalorieTracker {
     // Show canvas and hide placeholder
     canvas.style.display = 'block';
     if (placeholder) placeholder.style.display = 'none';
+
+    const chartContainer = canvas.closest('.chart-container');
+    if (chartContainer) {
+      const rect = chartContainer.getBoundingClientRect();
+      canvas.width = Math.max(360, Math.floor(rect.width - 24));
+      canvas.height = Math.max(190, Math.min(260, Math.floor(rect.height - 24)));
+    }
     
     this.drawSetupProgressChart(canvas, formData);
   }
@@ -86,7 +93,7 @@ class CalorieTracker {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
-    const padding = 58;
+    const padding = Math.max(42, Math.min(54, width * 0.1));
     
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -133,16 +140,19 @@ class CalorieTracker {
     const minWeight = Math.min(currentWeight, targetWeight, chartEndWeight) - 2;
     const maxWeight = Math.max(currentWeight, targetWeight, chartEndWeight) + 2;
     const weightRange = maxWeight - minWeight;
+    const plotTop = padding * 0.72;
+    const plotBottom = height - padding * 0.73;
+    const plotHeight = plotBottom - plotTop;
     
     // Calculate Y positions
     dataPoints.forEach(point => {
-      point.y = padding + ((maxWeight - point.weight) / weightRange) * (height - 2 * padding);
+      point.y = plotTop + ((maxWeight - point.weight) / weightRange) * plotHeight;
     });
     
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     ctx.fillStyle = soft;
-    ctx.fillRect(padding, padding, width - 2 * padding, height - 2 * padding);
+    ctx.fillRect(padding, plotTop, width - 2 * padding, plotHeight);
     
     // Draw grid lines
     ctx.strokeStyle = border;
@@ -150,7 +160,7 @@ class CalorieTracker {
     
     // Horizontal grid lines (weight)
     for (let i = 0; i <= 4; i++) {
-      const y = padding + (i / 4) * (height - 2 * padding);
+      const y = plotTop + (i / 4) * plotHeight;
       const weight = maxWeight - (i / 4) * weightRange;
       
       ctx.beginPath();
@@ -161,6 +171,7 @@ class CalorieTracker {
       // Weight labels
       ctx.fillStyle = muted;
       ctx.textAlign = 'right';
+      ctx.font = '11px Inter, sans-serif';
       ctx.fillText(weight.toFixed(1) + (formData.weightUnit || 'kg'), padding - 10, y + 4);
     }
     
@@ -170,17 +181,18 @@ class CalorieTracker {
       const days = Math.round((i / 4) * timeGoalDays);
       
       ctx.beginPath();
-      ctx.moveTo(x, padding);
-      ctx.lineTo(x, height - padding);
+      ctx.moveTo(x, plotTop);
+      ctx.lineTo(x, plotBottom);
       ctx.stroke();
       
       // Time labels
       ctx.fillStyle = muted;
       ctx.textAlign = 'center';
-      ctx.fillText(days + 'd', x, height - padding + 20);
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(days + 'd', x, height - padding * 0.38);
     }
 
-    const areaGradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+    const areaGradient = ctx.createLinearGradient(0, plotTop, 0, plotBottom);
     areaGradient.addColorStop(0, 'rgba(127, 29, 58, 0.22)');
     areaGradient.addColorStop(1, 'rgba(127, 29, 58, 0.02)');
     ctx.beginPath();
@@ -191,8 +203,8 @@ class CalorieTracker {
         ctx.lineTo(point.x, point.y);
       }
     });
-    ctx.lineTo(dataPoints[dataPoints.length - 1].x, height - padding);
-    ctx.lineTo(dataPoints[0].x, height - padding);
+    ctx.lineTo(dataPoints[dataPoints.length - 1].x, plotBottom);
+    ctx.lineTo(dataPoints[0].x, plotBottom);
     ctx.closePath();
     ctx.fillStyle = areaGradient;
     ctx.fill();
@@ -225,7 +237,7 @@ class CalorieTracker {
     });
 
     if (formData.isAdjustedForSafety) {
-      const targetY = padding + ((maxWeight - targetWeight) / weightRange) * (height - 2 * padding);
+      const targetY = plotTop + ((maxWeight - targetWeight) / weightRange) * plotHeight;
       ctx.save();
       ctx.setLineDash([6, 6]);
       ctx.strokeStyle = 'rgba(127, 29, 58, 0.45)';
@@ -248,13 +260,13 @@ class CalorieTracker {
     
     // Start weight
     ctx.textAlign = 'left';
-    ctx.fillText(`Start: ${currentWeight}${formData.weightUnit || 'kg'}`, dataPoints[0].x + 10, dataPoints[0].y - 10);
+    ctx.fillText(`Start: ${currentWeight}${formData.weightUnit || 'kg'}`, dataPoints[0].x + 8, dataPoints[0].y - 8);
     
     // Target weight
     const lastPoint = dataPoints[dataPoints.length - 1];
     ctx.textAlign = 'right';
     const endLabel = formData.isAdjustedForSafety ? 'Safe projection' : 'Target';
-    ctx.fillText(`${endLabel}: ${chartEndWeight.toFixed(1)}${formData.weightUnit || 'kg'}`, lastPoint.x - 10, lastPoint.y - 10);
+    ctx.fillText(`${endLabel}: ${chartEndWeight.toFixed(1)}${formData.weightUnit || 'kg'}`, lastPoint.x - 8, lastPoint.y - 8);
   }
 
   // Get time goal in days

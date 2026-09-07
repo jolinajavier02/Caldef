@@ -235,41 +235,44 @@
                             <!-- Results Section (hidden initially) -->
                             <div id="setupResults" class="setup-results" style="display: none;">
                                 <h3 data-translate="your_results">Your Results</h3>
-                                
-                                <div class="result-card result-hero">
-                                    <div class="result-header">
-                                        <h4 data-translate="daily_calorie_goal">Daily Calorie Goal</h4>
-                                        <div class="result-value" id="setupCalorieGoal">0</div>
-                                        <p class="result-subtitle" data-translate="calories_per_day">calories per day</p>
-                                    </div>
-                                </div>
 
-                                <div class="result-metrics">
-                                    <div>
-                                        <span>BMR</span>
-                                        <strong id="setupBmr">0</strong>
+                                <div class="result-topline">
+                                    <div class="result-card result-hero">
+                                        <div class="result-header">
+                                            <h4 data-translate="daily_calorie_goal">Daily Calorie Goal</h4>
+                                            <div class="result-value" id="setupCalorieGoal">0</div>
+                                            <p class="result-subtitle" data-translate="calories_per_day">calories per day</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span>Maintenance</span>
-                                        <strong id="setupMaintenance">0</strong>
-                                    </div>
-                                    <div>
-                                        <span>Daily deficit</span>
-                                        <strong id="setupDeficit">0</strong>
-                                    </div>
-                                </div>
-                                
-                                <div class="result-card">
-                                    <h4 data-translate="weight_progress_preview">Weight Progress Preview</h4>
-                                    <div class="chart-container">
-                                        <div class="chart-placeholder">
-                                            <p data-translate="chart_preview_text">Your weight progress chart will be available in the tracker</p>
-                                            <canvas id="setupProgressCanvas" width="520" height="280" style="display: none;"></canvas>
+
+                                    <div class="result-metrics">
+                                        <div>
+                                            <span>BMR</span>
+                                            <strong id="setupBmr">0</strong>
+                                        </div>
+                                        <div>
+                                            <span>Maintenance</span>
+                                            <strong id="setupMaintenance">0</strong>
+                                        </div>
+                                        <div>
+                                            <span>Daily deficit</span>
+                                            <strong id="setupDeficit">0</strong>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="safety-guidance" id="setupGuidance"></div>
+                                <div class="result-dashboard-grid">
+                                    <div class="result-card result-chart-card">
+                                        <h4 data-translate="weight_progress_preview">Weight Progress Preview</h4>
+                                        <div class="chart-container">
+                                            <div class="chart-placeholder">
+                                                <p data-translate="chart_preview_text">Your weight progress chart will be available in the tracker</p>
+                                                <canvas id="setupProgressCanvas" width="520" height="280" style="display: none;"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="safety-guidance" id="setupGuidance"></div>
+                                </div>
                                 
                                 <button id="calculateFoodsBtn" class="btn-primary" style="margin-top: 1rem;">
                                     <i class="fas fa-utensils"></i>

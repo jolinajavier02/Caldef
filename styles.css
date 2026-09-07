@@ -1734,6 +1734,126 @@ body[data-page="setupPage"] .setup-page-heading {
   background: rgba(255, 255, 255, 0.96);
 }
 
+/* Compact setup results */
+body[data-page="setupPage"] .setup-card.results-ready {
+  grid-template-columns: minmax(320px, 0.78fr) minmax(560px, 1.22fr);
+}
+
+.setup-card.results-ready .setup-intro-panel h2 {
+  font-size: clamp(2rem, 3.8vw, 3.6rem);
+}
+
+.setup-card.results-ready .setup-panel {
+  overflow-y: auto;
+}
+
+.setup-card.results-ready .setup-results {
+  display: block;
+  border-color: var(--border-color);
+  background: #ffffff;
+}
+
+.setup-card.results-ready .setup-results h3 {
+  margin-bottom: 0.65rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  text-align: left;
+}
+
+.result-topline {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.86fr) minmax(280px, 1.14fr);
+  gap: 0.75rem;
+  align-items: stretch;
+  margin-bottom: 0.75rem;
+}
+
+.setup-card.results-ready .result-hero {
+  min-height: 10.5rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0;
+}
+
+.setup-card.results-ready .result-value {
+  font-size: clamp(2.7rem, 5vw, 4.25rem);
+}
+
+.setup-card.results-ready .result-metrics {
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.setup-card.results-ready .result-metrics div {
+  min-height: 3.15rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.setup-card.results-ready .result-metrics strong {
+  margin-top: 0.15rem;
+  font-size: 1.25rem;
+}
+
+.result-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(230px, 0.75fr);
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.result-chart-card {
+  margin-bottom: 0;
+}
+
+.result-chart-card h4 {
+  margin-bottom: 0.4rem;
+}
+
+.setup-card.results-ready .chart-container {
+  min-height: 245px;
+  margin-top: 0.35rem;
+  padding: 0.5rem;
+}
+
+.setup-card.results-ready .chart-placeholder {
+  height: 100%;
+  padding: 0;
+}
+
+.setup-card.results-ready .chart-placeholder canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.setup-card.results-ready .safety-guidance {
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.setup-card.results-ready .guidance-card {
+  padding: 0.85rem;
+}
+
+.setup-card.results-ready .guidance-card p,
+.setup-card.results-ready .guidance-list {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.setup-card.results-ready .guidance-list {
+  padding: 0.85rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--primary-tint);
+}
+
+.setup-card.results-ready #calculateFoodsBtn {
+  min-height: 3rem;
+  margin-top: 0.75rem !important;
+}
+
 /* Login page viewport fix */
 body[data-page="loginPage"] .header {
   display: none;
