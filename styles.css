@@ -1795,7 +1795,7 @@ body[data-page="trackerPage"] .dashboard-copy {
 }
 
 body[data-page="trackerPage"] .metrics-section {
-  flex: 0 0 clamp(7.4rem, 12dvh, 8.9rem);
+  flex: 0 0 clamp(6.9rem, 11dvh, 8.2rem);
   display: flex;
   flex-direction: column;
 }
@@ -1810,7 +1810,7 @@ body[data-page="trackerPage"] .metric-box {
 }
 
 .habit-cards {
-  flex: 0 0 clamp(6.2rem, 10.5dvh, 8.3rem);
+  flex: 0 0 clamp(8.6rem, 15dvh, 11.2rem);
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1847,9 +1847,9 @@ body[data-page="trackerPage"] .metric-box {
 
 .habit-card figcaption {
   position: absolute;
-  right: 0.55rem;
-  bottom: 0.55rem;
-  left: 0.55rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  left: 0.75rem;
   z-index: 1;
   color: #ffffff;
   font-size: clamp(0.68rem, 0.75vw, 0.82rem);
@@ -1866,13 +1866,13 @@ body[data-page="trackerPage"] .metric-box {
 }
 
 .habit-card strong {
-  font-size: clamp(0.76rem, 0.95vw, 0.96rem);
+  font-size: clamp(0.9rem, 1.1vw, 1.15rem);
   letter-spacing: 0.04em;
 }
 
 .habit-card span {
   margin-top: 0.12rem;
-  font-size: clamp(0.58rem, 0.68vw, 0.72rem);
+  font-size: clamp(0.66rem, 0.78vw, 0.82rem);
 }
 
 .dashboard-remaining {
@@ -1923,8 +1923,8 @@ body[data-page="trackerPage"] .notes-actions i {
 }
 
 body[data-page="trackerPage"] .daily-notes-section {
-  flex: 1 1 clamp(5.2rem, 8.8dvh, 6.6rem);
-  min-height: 5rem;
+  flex: 1 1 clamp(4.8rem, 8dvh, 5.9rem);
+  min-height: 4.7rem;
   display: flex;
   flex-direction: column;
   padding: 0.72rem 1rem 0.78rem;
