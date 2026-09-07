@@ -2,7 +2,8 @@
 class CalorieTracker {
   constructor() {
     this.currentPage = 'setupPage';
-    this.currentUserEmail = localStorage.getItem('caldefSessionEmail') || null;
+    localStorage.removeItem('caldefSessionEmail');
+    this.currentUserEmail = sessionStorage.getItem('caldefSessionEmail') || null;
     this.currentProfileKey = this.getCurrentUserProfileKey();
     this.userProfile = this.loadUserProfile();
     this.dailyEntries = this.loadDailyEntries();
@@ -774,9 +775,9 @@ class CalorieTracker {
     }
 
     this.currentUserEmail = email;
-    localStorage.setItem('caldefSessionEmail', email);
+    sessionStorage.setItem('caldefSessionEmail', email);
     this.currentProfileKey = this.getCurrentUserProfileKey();
-    localStorage.setItem('currentProfileKey', this.currentProfileKey || '');
+    sessionStorage.setItem('currentProfileKey', this.currentProfileKey || '');
     this.userProfile = this.loadUserProfile();
     this.targetCalories = this.userProfile.targetCalories || 0;
     this.dailyEntries = this.loadDailyEntries();
@@ -1061,7 +1062,7 @@ class CalorieTracker {
     if (existingProfile) {
       // Load the existing profile
       this.currentProfileKey = existingProfile.key;
-      localStorage.setItem('currentProfileKey', this.currentProfileKey);
+      sessionStorage.setItem('currentProfileKey', this.currentProfileKey);
       this.userProfile = existingProfile.profile;
       this.targetCalories = this.userProfile.targetCalories || 0;
       
@@ -1183,7 +1184,7 @@ class CalorieTracker {
     
     // Save new profile
     this.currentProfileKey = profileKey;
-    localStorage.setItem('currentProfileKey', profileKey);
+    sessionStorage.setItem('currentProfileKey', profileKey);
     localStorage.setItem(`${profileKey}_trackerUnlocked`, 'false');
     this.attachProfileToCurrentUser(profileKey);
     this.userProfile = formData;
