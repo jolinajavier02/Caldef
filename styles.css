@@ -1675,6 +1675,65 @@ body[data-page="trackerPage"] .nav-item[data-page="setupPage"] {
   pointer-events: none;
 }
 
+/* Setup page planner panel */
+body[data-page="setupPage"] .setup-card {
+  width: min(1280px, 100%);
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.1fr);
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.setup-intro-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  overflow: hidden;
+  border: 1px solid rgba(127, 29, 58, 0.12);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(127, 29, 58, 0.09), rgba(255, 255, 255, 0.86));
+}
+
+.setup-intro-panel h2 {
+  max-width: 13ch;
+  color: var(--text-primary);
+  font-size: clamp(2.4rem, 4.8vw, 4.7rem);
+  line-height: 0.98;
+  font-weight: 800;
+}
+
+.setup-intro-panel p {
+  max-width: 34rem;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+}
+
+.setup-intro-panel .welcome-stats {
+  grid-template-columns: 1fr;
+  margin-top: 1.25rem;
+}
+
+.setup-intro-panel .welcome-stats div {
+  min-height: 4.5rem;
+  padding: 0.85rem 1rem;
+}
+
+body[data-page="setupPage"] .setup-panel {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+body[data-page="setupPage"] .setup-page-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.96);
+}
+
 /* Login page viewport fix */
 body[data-page="loginPage"] .header {
   display: none;
@@ -1786,6 +1845,15 @@ body[data-page="loginPage"] .gallery-card span {
   .setup-card .form-row.three-columns,
   .setup-card .form-row {
     grid-template-columns: 1fr;
+  }
+
+  body[data-page="setupPage"] .setup-card {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .setup-intro-panel {
+    min-height: auto;
   }
 
   .result-metrics {
