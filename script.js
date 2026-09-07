@@ -43,16 +43,15 @@ class CalorieTracker {
   }
 
   createSetupGuidanceHTML(formData) {
-    const timelineDays = this.getTimeGoalInDays(formData.timeGoal);
-    const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
-    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.targetWeightUnit);
-    const goalChangeKg = Math.abs(currentWeightKg - targetWeightKg);
-    const weeklyRate = goalChangeKg / (timelineDays / 7);
     const targetWeightLabel = `${formData.targetWeight.toFixed(1)} ${formData.targetWeightUnit || formData.weightUnit || 'kg'}`;
     const guidanceType = formData.isAdjustedForSafety ? 'warning' : 'good';
     const guidanceTitle = formData.isAdjustedForSafety ? 'Safety-adjusted plan' : 'Plan looks on track';
+    const targetDate = formData.targetDate
+      ? new Date(formData.targetDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+      : 'your target date';
+    const weeklyRate = ((formData.dailyCalorieAdjustment * 7) / 7700);
     const guidanceText = formData.isAdjustedForSafety
-      ? `The selected timeline needs about ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day, so CalDef capped the food deficit at ${formData.dailyCalorieAdjustment.toLocaleString()} calories for safer guidance.`
+      ? `The selected timeline needs about ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day. CalDef set your food target to ${formData.targetCalories.toLocaleString()} calories, creating a realistic ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit.`
       : `This target creates an estimated ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit, aiming for about ${weeklyRate.toFixed(2)} kg per week.`;
 
     return `
@@ -64,7 +63,8 @@ class CalorieTracker {
       </div>
       <div class="guidance-list">
         <span><i class="fas fa-scale-balanced"></i> Target weight: ${targetWeightLabel}</span>
-        <span><i class="fas fa-calendar-days"></i> Timeline: ${timelineDays} days</span>
+        <span><i class="fas fa-calendar-days"></i> Realistic timeline: ${formData.realisticTimelineDays} days</span>
+        <span><i class="fas fa-flag-checkered"></i> Projected date: ${targetDate}</span>
         <span><i class="fas fa-heart-pulse"></i> Intake is protected by a minimum calorie floor</span>
       </div>
     `;
@@ -100,7 +100,7 @@ class CalorieTracker {
     
     const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
     const targetWeightKg = this.convertToKg(formData.targetWeight, formData.targetWeightUnit);
-    const timeGoalDays = this.getTimeGoalInDays(formData.timeGoal);
+    const timeGoalDays = formData.realisticTimelineDays || this.getTimeGoalInDays(formData.timeGoal);
     const weightUnit = formData.targetWeightUnit || formData.weightUnit || 'kg';
     const currentWeight = this.convertFromKg(currentWeightKg, weightUnit);
     const targetWeight = this.convertFromKg(targetWeightKg, weightUnit);
@@ -123,8 +123,8 @@ class CalorieTracker {
     ctx.fillRect(0, 0, width, height);
 
     const startDate = new Date();
-    const goalDate = new Date(startDate);
-    goalDate.setDate(startDate.getDate() + timeGoalDays);
+    const goalDate = formData.targetDate ? new Date(formData.targetDate) : new Date(startDate);
+    if (!formData.targetDate) goalDate.setDate(startDate.getDate() + timeGoalDays);
     const labels = this.getMonthSequenceLabels(startDate, goalDate);
     const pointCount = labels.length;
     const plotLeft = Math.max(54, width * 0.1);
@@ -199,7 +199,13 @@ class CalorieTracker {
       ctx.lineWidth = index === points.length - 1 ? 7 : 5;
       ctx.stroke();
 
-      if (index < points.length - 1) {
+      const labelIndexes = new Set([
+        0,
+        Math.floor((points.length - 1) / 2),
+        Math.max(0, points.length - 2)
+      ]);
+
+      if (index < points.length - 1 && labelIndexes.has(index)) {
         ctx.fillStyle = dotColors[index];
         ctx.textAlign = index === 0 ? 'left' : 'center';
         ctx.font = '700 16px Inter, sans-serif';
@@ -248,7 +254,7 @@ class CalorieTracker {
       monthLabels.push(goalDate.toLocaleDateString('en-US', { month: 'short' }));
     }
 
-    if (monthLabels.length <= 7) {
+    if (monthLabels.length <= 10) {
       return ['Now', ...monthLabels];
     }
 
@@ -265,24 +271,7 @@ class CalorieTracker {
 
   // Get time goal in days
   getTimeGoalInDays(timeGoal) {
-    // Handle both old string format and new numeric week format
-    const timeGoalMap = {
-      // Old string format (for backward compatibility)
-      '2weeks': 14,
-      '1month': 30,
-      '2months': 60,
-      '3months': 90,
-      '6months': 180,
-      '1year': 365,
-      // New numeric week format
-      '2': 14,   // 2 weeks
-      '4': 28,   // 1 month (4 weeks)
-      '8': 56,   // 2 months (8 weeks)
-      '12': 84,  // 3 months (12 weeks)
-      '24': 168, // 6 months (24 weeks)
-      '52': 364  // 1 year (52 weeks)
-    };
-    return timeGoalMap[timeGoal] || 90;
+    return window.CalDefCalculator.getTimelineDays(timeGoal);
   }
 
   // Update tracker history
@@ -1172,57 +1161,18 @@ class CalorieTracker {
     // Save name to history
     this.saveNameToHistory(formData.name);
 
-    // Generate profile key
-    const profileKey = this.generateProfileKey(formData);
-
-    // Calculate BMR and daily calories
-    const bmr = this.calculateBMR(formData);
-    const dailyCalories = Math.round(bmr * formData.activityLevel);
-    
-    // Adjust for weight goal based on user's selected timeline
-    const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
-    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.targetWeightUnit);
-    if (targetWeightKg >= currentWeightKg) {
-      this.showNotification('For a calorie deficit plan, target weight must be lower than current weight.');
+    let calculatedPlan;
+    try {
+      calculatedPlan = window.CalDefCalculator.calculatePlan(formData);
+    } catch (error) {
+      this.showNotification(error.message);
       return;
     }
 
-    const weightDifference = Math.abs(targetWeightKg - currentWeightKg);
-    const isWeightLoss = currentWeightKg > targetWeightKg;
-    
-    // Calculate required daily calorie deficit/surplus based on timeline
-    // 1 kg of fat = approximately 7700 calories
-    const totalCaloriesNeeded = weightDifference * 7700;
-    const daysToTarget = this.getTimeGoalInDays(formData.timeGoal); // Get actual days from time goal
-    const requiredDailyAdjustment = totalCaloriesNeeded / daysToTarget;
-    const maxRecommendedDeficit = Math.min(1000, Math.round(dailyCalories * 0.3));
-    const plannedDeficit = Math.min(requiredDailyAdjustment, maxRecommendedDeficit);
-    
-    let targetCalories = dailyCalories;
-    let actualDailyAdjustment = 0;
-    if (isWeightLoss) {
-      // Weight loss: create deficit
-      targetCalories = dailyCalories - plannedDeficit;
-      // Ensure minimum safe calories (1200 for women, 1500 for men)
-      const minCalories = formData.gender === 'female' ? 1200 : 1500;
-      targetCalories = Math.max(targetCalories, minCalories);
-      actualDailyAdjustment = Math.max(0, dailyCalories - targetCalories);
+    // Generate profile key
+    const profileKey = this.generateProfileKey(formData);
 
-      formData.isAdjustedForSafety = requiredDailyAdjustment > actualDailyAdjustment || dailyCalories - plannedDeficit < minCalories;
-    } else if (weightDifference > 0) {
-      // Weight gain: create surplus
-      targetCalories = dailyCalories + requiredDailyAdjustment;
-      // Cap maximum surplus at 1000 calories for safety
-      targetCalories = Math.min(targetCalories, dailyCalories + 1000);
-      actualDailyAdjustment = Math.max(0, targetCalories - dailyCalories);
-    }
-
-    formData.bmr = bmr;
-    formData.dailyCalories = dailyCalories;
-    formData.targetCalories = Math.round(targetCalories);
-    formData.dailyCalorieAdjustment = Math.round(actualDailyAdjustment);
-    formData.requiredDailyDeficit = Math.round(requiredDailyAdjustment);
-    formData.maxRecommendedDeficit = Math.round(maxRecommendedDeficit);
+    Object.assign(formData, calculatedPlan);
     formData.createdAt = new Date().toISOString();
     
     // Save new profile
@@ -1254,29 +1204,19 @@ class CalorieTracker {
 
   // BMR calculation using Mifflin-St Jeor equation
   calculateBMR(profile) {
-    const weightKg = this.convertToKg(profile.currentWeight, profile.weightUnit);
-    const heightCm = this.convertToCm(profile.height, profile.heightUnit);
-    
-    let bmr;
-    if (profile.gender === 'male') {
-      bmr = 10 * weightKg + 6.25 * heightCm - 5 * profile.age + 5;
-    } else {
-      bmr = 10 * weightKg + 6.25 * heightCm - 5 * profile.age - 161;
-    }
-    
-    return Math.round(bmr);
+    return window.CalDefCalculator.calculateBmr(profile);
   }
 
   convertToKg(weight, unit) {
-    return unit === 'lbs' ? weight * 0.453592 : weight;
+    return window.CalDefCalculator.toKg(weight, unit);
   }
 
   convertFromKg(weightKg, unit) {
-    return unit === 'lbs' ? weightKg / 0.453592 : weightKg;
+    return window.CalDefCalculator.fromKg(weightKg, unit);
   }
 
   convertToCm(height, unit) {
-    return unit === 'in' ? height * 2.54 : height;
+    return window.CalDefCalculator.toCm(height, unit);
   }
 
   // Food tracking
@@ -1794,8 +1734,8 @@ class CalorieTracker {
       daysWithEntries++;
     }
     
-    // Calculate days remaining based on time goal
-    const timeGoalDays = this.getTimeGoalInDays(this.userProfile.timeGoal);
+    // Calculate days remaining based on the realistic safety-adjusted plan.
+    const timeGoalDays = this.userProfile.realisticTimelineDays || this.getTimeGoalInDays(this.userProfile.timeGoal);
     const profileCreatedDate = new Date(this.userProfile.createdAt);
     const today = new Date();
     const daysSinceStart = Math.floor((today - profileCreatedDate) / (1000 * 60 * 60 * 24));
@@ -2319,7 +2259,22 @@ class CalorieTracker {
   loadUserProfile() {
     if (this.currentProfileKey) {
       const saved = localStorage.getItem(this.currentProfileKey);
-      return saved ? JSON.parse(saved) : {};
+      if (!saved) return {};
+
+      const profile = JSON.parse(saved);
+      if (profile && profile.currentWeight && profile.targetWeight && profile.activityLevel && !profile.realisticTimelineDays) {
+        try {
+          const recalculated = window.CalDefCalculator.calculatePlan({
+            ...profile,
+            targetWeightUnit: profile.targetWeightUnit || profile.weightUnit
+          });
+          return { ...profile, ...recalculated };
+        } catch (error) {
+          return profile;
+        }
+      }
+
+      return profile;
     }
     return {};
   }
