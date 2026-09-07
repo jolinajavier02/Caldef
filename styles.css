@@ -2026,13 +2026,15 @@ body[data-page="loginPage"] .container {
 
 body[data-page="loginPage"] .landing-hero {
   width: min(1720px, calc(100vw - clamp(1.5rem, 4vw, 4rem)));
+  height: 100%;
   margin: 0 auto;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(1rem, 1.8vw, 1.5rem);
+  align-items: center;
 }
 
 body[data-page="loginPage"] .landing-copy {
-  height: 100%;
+  height: min(820px, calc(100vh - 5rem));
   justify-content: center;
   padding: clamp(1.5rem, 3.4vw, 3rem);
 }
@@ -2083,8 +2085,8 @@ body[data-page="loginPage"] .login-form .hero-start-btn {
 body[data-page="loginPage"] .landing-gallery {
   grid-auto-rows: minmax(0, 1fr);
   padding: clamp(0.9rem, 2vw, 1.5rem);
+  height: min(820px, calc(100vh - 5rem));
   align-self: center;
-  height: min(100%, calc(100vh - 2rem));
 }
 
 body[data-page="loginPage"] .gallery-card {
