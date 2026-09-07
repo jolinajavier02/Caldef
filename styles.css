@@ -474,6 +474,22 @@ button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.setup-card .goals-section .goals-row {
+  grid-template-columns: minmax(190px, 0.92fr) minmax(210px, 1.05fr) minmax(230px, 1.12fr);
+  align-items: end;
+}
+
+.setup-card .goals-section .input-with-unit {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) 4.25rem;
+  gap: 0.45rem;
+}
+
+.setup-card .goals-section .unit-display {
+  min-width: 0;
+  padding-inline: 0.75rem;
+}
+
 .personal-info-section h3,
 .body-measurements-section h3,
 .goals-section h3,
@@ -2313,6 +2329,10 @@ body[data-page="loginPage"] .gallery-card span {
 
   .setup-card .form-row.three-columns,
   .setup-card .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .setup-card .goals-section .goals-row {
     grid-template-columns: 1fr;
   }
 
