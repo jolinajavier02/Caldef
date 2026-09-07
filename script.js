@@ -43,10 +43,10 @@ class CalorieTracker {
   createSetupGuidanceHTML(formData) {
     const timelineDays = this.getTimeGoalInDays(formData.timeGoal);
     const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
-    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.weightUnit);
+    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.targetWeightUnit);
     const goalChangeKg = Math.abs(currentWeightKg - targetWeightKg);
     const weeklyRate = goalChangeKg / (timelineDays / 7);
-    const targetWeightLabel = `${formData.targetWeight.toFixed(1)} ${formData.weightUnit || 'kg'}`;
+    const targetWeightLabel = `${formData.targetWeight.toFixed(1)} ${formData.targetWeightUnit || formData.weightUnit || 'kg'}`;
     const guidanceType = formData.isAdjustedForSafety ? 'warning' : 'good';
     const guidanceTitle = formData.isAdjustedForSafety ? 'Safety-adjusted plan' : 'Plan looks on track';
     const guidanceText = formData.isAdjustedForSafety
@@ -96,14 +96,16 @@ class CalorieTracker {
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
     
-    const currentWeight = parseFloat(formData.currentWeight);
-    const targetWeight = parseFloat(formData.targetWeight);
+    const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
+    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.targetWeightUnit);
     const timeGoalDays = this.getTimeGoalInDays(formData.timeGoal);
-    const weightUnit = formData.weightUnit || 'kg';
+    const weightUnit = formData.targetWeightUnit || formData.weightUnit || 'kg';
+    const currentWeight = this.convertFromKg(currentWeightKg, weightUnit);
+    const targetWeight = this.convertFromKg(targetWeightKg, weightUnit);
 
     const isWeightLoss = currentWeight > targetWeight;
     const projectedLossKg = formData.dailyCalorieAdjustment * timeGoalDays / 7700;
-    const projectedLossInUnit = weightUnit === 'lbs' ? projectedLossKg / 0.453592 : projectedLossKg;
+    const projectedLossInUnit = this.convertFromKg(projectedLossKg, weightUnit);
     const projectedEndWeight = isWeightLoss
       ? Math.max(targetWeight, currentWeight - projectedLossInUnit)
       : targetWeight;
@@ -118,17 +120,23 @@ class CalorieTracker {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
+    const startDate = new Date();
+    const goalDate = new Date(startDate);
+    goalDate.setDate(startDate.getDate() + timeGoalDays);
+    const labels = this.getMonthSequenceLabels(startDate, goalDate);
+    const pointCount = labels.length;
     const plotLeft = Math.max(54, width * 0.1);
     const plotRight = width - Math.max(54, width * 0.1);
-    const plotTop = Math.max(46, height * 0.22);
+    const plotTop = Math.max(44, height * 0.2);
     const plotBottom = height - 34;
-    const pointCount = 4;
-    const points = Array.from({ length: pointCount }, (_, index) => {
-      const progress = index / (pointCount - 1);
-      const ease = 1 - Math.pow(1 - progress, 1.35);
+    const points = labels.map((label, index) => {
+      const progress = pointCount === 1 ? 1 : index / (pointCount - 1);
       return {
         x: plotLeft + (plotRight - plotLeft) * progress,
-        y: plotTop + (plotBottom - plotTop) * ease * 0.66,
+        y: isWeightLoss
+          ? plotTop + (plotBottom - plotTop) * progress * 0.62
+          : plotBottom - (plotBottom - plotTop) * progress * 0.62,
+        label,
         weight: currentWeight + (chartEndWeight - currentWeight) * progress
       };
     });
@@ -157,24 +165,22 @@ class CalorieTracker {
     ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
-    ctx.bezierCurveTo(
-      points[0].x + 90, points[0].y - 2,
-      points[1].x - 65, points[1].y - 34,
-      points[1].x, points[1].y
-    );
-    ctx.bezierCurveTo(
-      points[1].x + 88, points[1].y + 44,
-      points[2].x - 72, points[2].y + 18,
-      points[2].x, points[2].y
-    );
-    ctx.bezierCurveTo(
-      points[2].x + 74, points[2].y + 20,
-      points[3].x - 88, points[3].y + 6,
-      points[3].x, points[3].y
-    );
+    for (let i = 1; i < points.length; i++) {
+      const previous = points[i - 1];
+      const current = points[i];
+      const midX = (previous.x + current.x) / 2;
+      const midY = (previous.y + current.y) / 2;
+      ctx.quadraticCurveTo(previous.x, previous.y, midX, midY);
+    }
+    const lastDrawPoint = points[points.length - 1];
+    ctx.lineTo(lastDrawPoint.x, lastDrawPoint.y);
     ctx.stroke();
 
-    const dotColors = [danger, warning, warning, success];
+    const dotColors = points.map((_, index) => {
+      if (index === 0) return danger;
+      if (index === points.length - 1) return success;
+      return warning;
+    });
     points.forEach((point, index) => {
       if (index === points.length - 1) {
         ctx.fillStyle = 'rgba(27, 138, 90, 0.16)';
@@ -214,24 +220,45 @@ class CalorieTracker {
     ctx.fill();
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
-    ctx.font = '800 18px Inter, sans-serif';
-    ctx.fillText('Goal', lastPoint.x, lastPoint.y - 61);
+    ctx.font = '800 17px Inter, sans-serif';
+    ctx.fillText(formData.isAdjustedForSafety ? 'Plan' : 'Goal', lastPoint.x, lastPoint.y - 61);
     ctx.font = '700 17px Inter, sans-serif';
-    ctx.fillText(`${targetWeight.toFixed(0)} ${weightUnit}`, lastPoint.x, lastPoint.y - 40);
+    ctx.fillText(`${chartEndWeight.toFixed(0)} ${weightUnit}`, lastPoint.x, lastPoint.y - 40);
 
-    const startDate = new Date();
-    const labels = points.map((_, index) => {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + Math.round(timeGoalDays * (index / (pointCount - 1))));
-      return index === 0 ? 'Now' : date.toLocaleDateString('en-US', { month: 'short' });
-    });
-
-    labels.forEach((label, index) => {
+    points.forEach((point) => {
       ctx.fillStyle = muted;
       ctx.textAlign = 'center';
       ctx.font = '14px Inter, sans-serif';
-      ctx.fillText(label, points[index].x, height - 8);
+      ctx.fillText(point.label, point.x, height - 8);
     });
+  }
+
+  getMonthSequenceLabels(startDate, goalDate) {
+    const monthLabels = [];
+    const cursor = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+
+    while (cursor <= goalDate) {
+      monthLabels.push(cursor.toLocaleDateString('en-US', { month: 'short' }));
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    if (monthLabels.length === 0) {
+      monthLabels.push(goalDate.toLocaleDateString('en-US', { month: 'short' }));
+    }
+
+    if (monthLabels.length <= 7) {
+      return ['Now', ...monthLabels];
+    }
+
+    const sampled = [];
+    const targetCount = 6;
+    for (let i = 0; i < targetCount; i++) {
+      const index = Math.round((i / (targetCount - 1)) * (monthLabels.length - 1));
+      const label = monthLabels[index];
+      if (!sampled.includes(label)) sampled.push(label);
+    }
+
+    return ['Now', ...sampled];
   }
 
   // Get time goal in days
@@ -542,13 +569,14 @@ class CalorieTracker {
     const weightUnit = document.getElementById('weightUnit');
     const targetWeightUnit = document.getElementById('targetWeightUnit');
     if (weightUnit) {
-      weightUnit.addEventListener('change', (e) => {
-        if (targetWeightUnit) targetWeightUnit.value = e.target.value;
+      weightUnit.addEventListener('change', () => {
+        if (!targetWeightUnit || targetWeightUnit.dataset.touched === 'true') return;
+        targetWeightUnit.value = weightUnit.value;
       });
     }
     if (targetWeightUnit) {
-      targetWeightUnit.addEventListener('change', (e) => {
-        if (weightUnit) weightUnit.value = e.target.value;
+      targetWeightUnit.addEventListener('change', () => {
+        targetWeightUnit.dataset.touched = 'true';
       });
     }
 
@@ -848,6 +876,7 @@ class CalorieTracker {
       currentWeight: profile.currentWeight,
       weightUnit: profile.weightUnit,
       targetWeight: profile.targetWeight,
+      targetWeightUnit: profile.targetWeightUnit || profile.weightUnit,
       timeGoal: profile.timeGoal,
       activityLevel: profile.activityLevel
     };
@@ -860,8 +889,8 @@ class CalorieTracker {
     });
 
     const targetWeightUnit = document.getElementById('targetWeightUnit');
-    if (targetWeightUnit && profile.weightUnit) {
-      targetWeightUnit.value = profile.weightUnit;
+    if (targetWeightUnit) {
+      targetWeightUnit.value = profile.targetWeightUnit || profile.weightUnit || 'kg';
     }
   }
 
@@ -1128,6 +1157,7 @@ class CalorieTracker {
       currentWeight: parseFloat(document.getElementById('currentWeight').value),
       weightUnit: document.getElementById('weightUnit').value,
       targetWeight: parseFloat(document.getElementById('targetWeight').value),
+      targetWeightUnit: document.getElementById('targetWeightUnit').value,
       timeGoal: document.getElementById('timeGoal').value,
       activityLevel: parseFloat(document.getElementById('activityLevel').value)
     };
@@ -1146,7 +1176,12 @@ class CalorieTracker {
     
     // Adjust for weight goal based on user's selected timeline
     const currentWeightKg = this.convertToKg(formData.currentWeight, formData.weightUnit);
-    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.weightUnit);
+    const targetWeightKg = this.convertToKg(formData.targetWeight, formData.targetWeightUnit);
+    if (targetWeightKg >= currentWeightKg) {
+      this.showNotification('For a calorie deficit plan, target weight must be lower than current weight.');
+      return;
+    }
+
     const weightDifference = Math.abs(targetWeightKg - currentWeightKg);
     const isWeightLoss = currentWeightKg > targetWeightKg;
     
@@ -1154,31 +1189,34 @@ class CalorieTracker {
     // 1 kg of fat = approximately 7700 calories
     const totalCaloriesNeeded = weightDifference * 7700;
     const daysToTarget = this.getTimeGoalInDays(formData.timeGoal); // Get actual days from time goal
-    const dailyCalorieAdjustment = totalCaloriesNeeded / daysToTarget;
+    const requiredDailyAdjustment = totalCaloriesNeeded / daysToTarget;
     const maxRecommendedDeficit = Math.min(1000, Math.round(dailyCalories * 0.3));
-    const safeDeficit = Math.min(dailyCalorieAdjustment, maxRecommendedDeficit);
+    const plannedDeficit = Math.min(requiredDailyAdjustment, maxRecommendedDeficit);
     
     let targetCalories = dailyCalories;
+    let actualDailyAdjustment = 0;
     if (isWeightLoss) {
       // Weight loss: create deficit
-      targetCalories = dailyCalories - safeDeficit;
+      targetCalories = dailyCalories - plannedDeficit;
       // Ensure minimum safe calories (1200 for women, 1500 for men)
       const minCalories = formData.gender === 'female' ? 1200 : 1500;
       targetCalories = Math.max(targetCalories, minCalories);
-      
-      formData.isAdjustedForSafety = dailyCalorieAdjustment > safeDeficit || dailyCalories - safeDeficit < minCalories;
+      actualDailyAdjustment = Math.max(0, dailyCalories - targetCalories);
+
+      formData.isAdjustedForSafety = requiredDailyAdjustment > actualDailyAdjustment || dailyCalories - plannedDeficit < minCalories;
     } else if (weightDifference > 0) {
       // Weight gain: create surplus
-      targetCalories = dailyCalories + dailyCalorieAdjustment;
+      targetCalories = dailyCalories + requiredDailyAdjustment;
       // Cap maximum surplus at 1000 calories for safety
       targetCalories = Math.min(targetCalories, dailyCalories + 1000);
+      actualDailyAdjustment = Math.max(0, targetCalories - dailyCalories);
     }
 
     formData.bmr = bmr;
     formData.dailyCalories = dailyCalories;
     formData.targetCalories = Math.round(targetCalories);
-    formData.dailyCalorieAdjustment = Math.round(safeDeficit);
-    formData.requiredDailyDeficit = Math.round(dailyCalorieAdjustment);
+    formData.dailyCalorieAdjustment = Math.round(actualDailyAdjustment);
+    formData.requiredDailyDeficit = Math.round(requiredDailyAdjustment);
     formData.maxRecommendedDeficit = Math.round(maxRecommendedDeficit);
     formData.createdAt = new Date().toISOString();
     
@@ -1226,6 +1264,10 @@ class CalorieTracker {
 
   convertToKg(weight, unit) {
     return unit === 'lbs' ? weight * 0.453592 : weight;
+  }
+
+  convertFromKg(weightKg, unit) {
+    return unit === 'lbs' ? weightKg / 0.453592 : weightKg;
   }
 
   convertToCm(height, unit) {
@@ -2166,7 +2208,8 @@ class CalorieTracker {
       targetCalories: profile.targetCalories,
       currentWeight: profile.currentWeight,
       targetWeight: profile.targetWeight,
-      weightUnit: profile.weightUnit
+      weightUnit: profile.weightUnit,
+      targetWeightUnit: profile.targetWeightUnit || profile.weightUnit
     };
 
     const withoutDuplicate = registrations.filter(record => record.profileKey !== profileKey);

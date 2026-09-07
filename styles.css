@@ -2067,7 +2067,7 @@ body[data-page="setupPage"] .setup-card {
 .setup-intro-panel h2 {
   max-width: 13ch;
   color: var(--text-primary);
-  font-size: clamp(2.4rem, 4.8vw, 4.7rem);
+  font-size: clamp(2rem, 3.8vw, 3.6rem);
   line-height: 0.98;
   font-weight: 800;
 }
@@ -2109,10 +2109,6 @@ body[data-page="setupPage"] .setup-page-heading h2 {
 /* Compact setup results */
 body[data-page="setupPage"] .setup-card.results-ready {
   grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.1fr);
-}
-
-.setup-card.results-ready .setup-intro-panel h2 {
-  font-size: clamp(2rem, 3.8vw, 3.6rem);
 }
 
 .setup-card.results-ready .setup-panel {
