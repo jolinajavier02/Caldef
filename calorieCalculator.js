@@ -65,15 +65,16 @@ const CalDefCalculator = (() => {
     const requiredDailyDeficit = totalDeficitNeeded / selectedTimelineDays;
     const minCalories = MIN_CALORIES[profile.gender] || MIN_CALORIES.female;
     const maximumRecommendedDeficit = Math.min(MAX_DAILY_DEFICIT, Math.round(maintenanceCalories * MAX_DEFICIT_RATIO));
+    const floorAllowedDeficit = Math.max(0, maintenanceCalories - minCalories);
     const roundedRequiredDailyDeficit = Math.round(requiredDailyDeficit);
-    const actualDailyDeficit = Math.round(Math.min(requiredDailyDeficit, maximumRecommendedDeficit));
-    const targetCalories = Math.max(0, maintenanceCalories - actualDailyDeficit);
+    const actualDailyDeficit = Math.round(Math.min(requiredDailyDeficit, maximumRecommendedDeficit, floorAllowedDeficit));
+    const targetCalories = Math.max(minCalories, maintenanceCalories - actualDailyDeficit);
     const realisticTimelineDays = actualDailyDeficit > 0
       ? Math.ceil(totalDeficitNeeded / actualDailyDeficit)
       : selectedTimelineDays;
     const isAdjustedForSafety = actualDailyDeficit < roundedRequiredDailyDeficit;
-    const belowMinimumFloor = Math.round(targetCalories) < minCalories;
-    const limitingFactor = isAdjustedForSafety ? 'recommended deficit limit' : 'selected timeline';
+    const floorApplied = Math.round(targetCalories) <= minCalories;
+    const limitingFactor = floorAllowedDeficit <= maximumRecommendedDeficit ? 'minimum calorie floor' : 'recommended deficit limit';
     const projectedLossKg = (actualDailyDeficit * selectedTimelineDays) / KCAL_PER_KG;
     const projectedWeightAtSelectedTimelineKg = Math.max(targetWeightKg, currentWeightKg - projectedLossKg);
 
@@ -86,12 +87,12 @@ const CalDefCalculator = (() => {
       requiredDailyDeficit: roundedRequiredDailyDeficit,
       maxRecommendedDeficit: maximumRecommendedDeficit,
       minimumCalories: minCalories,
-      floorApplied: false,
-      belowMinimumFloor,
+      floorApplied,
+      belowMinimumFloor: false,
       limitingFactor,
       selectedTimelineDays,
       realisticTimelineDays,
-      daysRemaining: realisticTimelineDays,
+      daysRemaining: selectedTimelineDays,
       totalDeficitNeeded: Math.round(totalDeficitNeeded),
       currentWeightKg,
       targetWeightKg,

@@ -54,12 +54,9 @@ class CalorieTracker {
       ? new Date(formData.selectedTimelineDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
       : 'your target date';
     const weeklyRate = ((formData.dailyCalorieAdjustment * 7) / 7700);
-    const floorWarning = formData.belowMinimumFloor
-      ? ` Below ${formData.minimumCalories.toLocaleString()} minimum reference.`
-      : '';
     const guidanceText = formData.isAdjustedForSafety
-      ? `Needed: ${formData.requiredDailyDeficit.toLocaleString()}/day. Used: ${formData.dailyCalorieAdjustment.toLocaleString()}/day.${floorWarning}`
-      : `Daily deficit: ${formData.dailyCalorieAdjustment.toLocaleString()}/day. About ${weeklyRate.toFixed(2)} kg per week.${floorWarning}`;
+      ? `Needed: ${formData.requiredDailyDeficit.toLocaleString()}/day. Used: ${formData.dailyCalorieAdjustment.toLocaleString()}/day. Goal capped at ${formData.targetCalories.toLocaleString()} calories.`
+      : `Daily deficit: ${formData.dailyCalorieAdjustment.toLocaleString()}/day. About ${weeklyRate.toFixed(2)} kg per week.`;
 
     return `
       <div class="guidance-card ${guidanceType}">
@@ -1740,8 +1737,8 @@ class CalorieTracker {
       daysWithEntries++;
     }
     
-    // Calculate days remaining based on the realistic safety-adjusted plan.
-    const timeGoalDays = this.userProfile.realisticTimelineDays || this.getTimeGoalInDays(this.userProfile.timeGoal);
+    // Calculate days remaining from the selected setup timeline.
+    const timeGoalDays = this.userProfile.selectedTimelineDays || this.getTimeGoalInDays(this.userProfile.timeGoal);
     const profileCreatedDate = new Date(this.userProfile.createdAt);
     const today = new Date();
     const daysSinceStart = Math.floor((today - profileCreatedDate) / (1000 * 60 * 60 * 24));
