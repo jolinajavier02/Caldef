@@ -68,10 +68,13 @@ const CalDefCalculator = (() => {
     const floorAllowedDeficit = Math.max(0, maintenanceCalories - minCalories);
     const actualDailyDeficit = Math.round(Math.min(requiredDailyDeficit, maximumRecommendedDeficit, floorAllowedDeficit));
     const targetCalories = Math.max(minCalories, maintenanceCalories - actualDailyDeficit);
+    const roundedRequiredDailyDeficit = Math.round(requiredDailyDeficit);
     const realisticTimelineDays = actualDailyDeficit > 0
       ? Math.ceil(totalDeficitNeeded / actualDailyDeficit)
       : selectedTimelineDays;
-    const isAdjustedForSafety = actualDailyDeficit < Math.round(requiredDailyDeficit);
+    const isAdjustedForSafety = actualDailyDeficit < roundedRequiredDailyDeficit;
+    const floorApplied = Math.round(targetCalories) <= minCalories;
+    const limitingFactor = floorAllowedDeficit <= maximumRecommendedDeficit ? 'minimum calorie floor' : 'recommended deficit limit';
     const projectedLossKg = (actualDailyDeficit * selectedTimelineDays) / KCAL_PER_KG;
     const projectedWeightAtSelectedTimelineKg = Math.max(targetWeightKg, currentWeightKg - projectedLossKg);
 
@@ -81,8 +84,11 @@ const CalDefCalculator = (() => {
       maintenanceCalories,
       targetCalories: Math.round(targetCalories),
       dailyCalorieAdjustment: actualDailyDeficit,
-      requiredDailyDeficit: Math.round(requiredDailyDeficit),
+      requiredDailyDeficit: roundedRequiredDailyDeficit,
       maxRecommendedDeficit: maximumRecommendedDeficit,
+      minimumCalories: minCalories,
+      floorApplied,
+      limitingFactor,
       selectedTimelineDays,
       realisticTimelineDays,
       daysRemaining: realisticTimelineDays,

@@ -19,6 +19,8 @@ class CalorieTracker {
   showSetupResults(formData) {
     const setupResults = document.getElementById('setupResults');
     const setupCalorieGoal = document.getElementById('setupCalorieGoal');
+    const setupCalorieTitle = document.getElementById('setupCalorieTitle');
+    const setupCalorieNote = document.getElementById('setupCalorieNote');
     const setupBmr = document.getElementById('setupBmr');
     const setupMaintenance = document.getElementById('setupMaintenance');
     const setupDeficit = document.getElementById('setupDeficit');
@@ -28,6 +30,14 @@ class CalorieTracker {
       const setupCard = document.getElementById('setupCard');
       if (setupCard) setupCard.classList.add('results-ready');
       setupCalorieGoal.textContent = formData.targetCalories.toLocaleString();
+      if (setupCalorieTitle) {
+        setupCalorieTitle.textContent = formData.floorApplied ? 'Minimum Daily Intake' : 'Daily Calorie Goal';
+      }
+      if (setupCalorieNote) {
+        setupCalorieNote.textContent = formData.floorApplied
+          ? `Safety floor applied. Your selected timeline needs ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day.`
+          : `Built from your profile, activity level, target weight, and timeline.`;
+      }
       if (setupBmr) setupBmr.textContent = formData.bmr.toLocaleString();
       if (setupMaintenance) setupMaintenance.textContent = formData.dailyCalories.toLocaleString();
       if (setupDeficit) setupDeficit.textContent = formData.dailyCalorieAdjustment.toLocaleString();
@@ -51,7 +61,7 @@ class CalorieTracker {
       : 'your target date';
     const weeklyRate = ((formData.dailyCalorieAdjustment * 7) / 7700);
     const guidanceText = formData.isAdjustedForSafety
-      ? `The selected timeline needs about ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day. CalDef set your food target to ${formData.targetCalories.toLocaleString()} calories, creating a realistic ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit.`
+      ? `The selected timeline needs about ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day. CalDef set your food target to ${formData.targetCalories.toLocaleString()} calories because of the ${formData.limitingFactor}, creating a realistic ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit.`
       : `This target creates an estimated ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit, aiming for about ${weeklyRate.toFixed(2)} kg per week.`;
 
     return `
