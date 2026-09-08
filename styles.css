@@ -2186,7 +2186,7 @@ body[data-page="setupPage"] .setup-card.results-ready {
 }
 
 .setup-card.results-ready .chart-container {
-  min-height: 220px;
+  min-height: 190px;
   margin-top: 0.2rem;
   padding: 0.25rem;
   background: #ffffff;
@@ -2212,17 +2212,17 @@ body[data-page="setupPage"] .setup-card.results-ready {
 
 .setup-card.results-ready .guidance-card {
   min-height: 100%;
-  padding: 0.7rem;
+  padding: 0.6rem;
 }
 
 .setup-card.results-ready .guidance-card p,
 .setup-card.results-ready .guidance-list {
-  font-size: 0.78rem;
-  line-height: 1.28;
+  font-size: 0.76rem;
+  line-height: 1.18;
 }
 
 .setup-card.results-ready .guidance-list {
-  padding: 0.7rem;
+  padding: 0.6rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--primary-tint);

@@ -54,9 +54,12 @@ class CalorieTracker {
       ? new Date(formData.selectedTimelineDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
       : 'your target date';
     const weeklyRate = ((formData.dailyCalorieAdjustment * 7) / 7700);
+    const floorWarning = formData.belowMinimumFloor
+      ? ` Below ${formData.minimumCalories.toLocaleString()} minimum reference.`
+      : '';
     const guidanceText = formData.isAdjustedForSafety
-      ? `The selected timeline needs about ${formData.requiredDailyDeficit.toLocaleString()} calories of deficit per day. CalDef set your food target to ${formData.targetCalories.toLocaleString()} calories because of the ${formData.limitingFactor}, creating a realistic ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit.`
-      : `This target creates an estimated ${formData.dailyCalorieAdjustment.toLocaleString()} calorie daily deficit, aiming for about ${weeklyRate.toFixed(2)} kg per week.`;
+      ? `Needed: ${formData.requiredDailyDeficit.toLocaleString()}/day. Used: ${formData.dailyCalorieAdjustment.toLocaleString()}/day.${floorWarning}`
+      : `Daily deficit: ${formData.dailyCalorieAdjustment.toLocaleString()}/day. About ${weeklyRate.toFixed(2)} kg per week.${floorWarning}`;
 
     return `
       <div class="guidance-card ${guidanceType}">
@@ -69,7 +72,6 @@ class CalorieTracker {
         <span><i class="fas fa-scale-balanced"></i> Target weight: ${targetWeightLabel}</span>
         <span><i class="fas fa-calendar-days"></i> Selected timeline: ${formData.selectedTimelineDays || this.getTimeGoalInDays(formData.timeGoal)} days</span>
         <span><i class="fas fa-flag-checkered"></i> Timeline ends: ${selectedTimelineDate}</span>
-        <span><i class="fas fa-heart-pulse"></i> Intake is protected by a minimum calorie floor</span>
       </div>
     `;
   }
@@ -110,12 +112,7 @@ class CalorieTracker {
     const targetWeight = this.convertFromKg(targetWeightKg, weightUnit);
 
     const isWeightLoss = currentWeight > targetWeight;
-    const projectedLossKg = formData.dailyCalorieAdjustment * timeGoalDays / 7700;
-    const projectedLossInUnit = this.convertFromKg(projectedLossKg, weightUnit);
-    const projectedEndWeight = isWeightLoss
-      ? Math.max(targetWeight, currentWeight - projectedLossInUnit)
-      : targetWeight;
-    const chartEndWeight = formData.isAdjustedForSafety ? projectedEndWeight : targetWeight;
+    const chartEndWeight = targetWeight;
 
     const styles = getComputedStyle(document.documentElement);
     const muted = styles.getPropertyValue('--text-secondary').trim() || '#76666c';
@@ -233,7 +230,7 @@ class CalorieTracker {
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.font = '800 17px Inter, sans-serif';
-    ctx.fillText(formData.isAdjustedForSafety ? 'Plan' : 'Goal', lastPoint.x, lastPoint.y - 61);
+    ctx.fillText('Goal', lastPoint.x, lastPoint.y - 61);
     ctx.font = '700 17px Inter, sans-serif';
     ctx.fillText(`${chartEndWeight.toFixed(0)} ${weightUnit}`, lastPoint.x, lastPoint.y - 40);
 
