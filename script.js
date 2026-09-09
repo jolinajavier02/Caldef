@@ -350,21 +350,10 @@ class CalorieTracker {
 
   // Get all food entries from storage
   getAllFoodEntries() {
-    const allEntries = [];
-    const storageKeys = Object.keys(localStorage);
-    
-    storageKeys.forEach(key => {
-      if (key.startsWith(`${this.currentProfileKey}_dailyEntries_`)) {
-        try {
-          const entries = JSON.parse(localStorage.getItem(key)) || [];
-          allEntries.push(...entries);
-        } catch (e) {
-          console.error('Error parsing entries:', e);
-        }
-      }
-    });
-    
-    return allEntries;
+    const history = this.loadDailyHistory();
+    return Object.values(history).flatMap(dayRecord => (
+      Array.isArray(dayRecord.entries) ? dayRecord.entries : []
+    ));
   }
 
   // Save daily notes
@@ -510,6 +499,14 @@ class CalorieTracker {
       item.addEventListener('click', (e) => {
         const page = e.currentTarget.getAttribute('data-page');
         
+        if (page === 'setupPage' && this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.showNotification('Setup is already complete for this account.');
+          this.showPage('trackerPage');
+          return;
+        }
+
         // Prevent direct access until setup is calculated and Track My Calorie is clicked.
         if ((page === 'trackerPage' || page === 'historyPage') && (!this.userProfile || !this.userProfile.targetCalories || !this.isTrackerUnlocked())) {
           e.preventDefault();
@@ -661,7 +658,7 @@ class CalorieTracker {
     const trackerUnlocked = isProfileComplete && this.isTrackerUnlocked();
 
     if (setupNavItem) {
-      if (!this.currentUserEmail) {
+      if (!this.currentUserEmail || trackerUnlocked) {
         setupNavItem.style.opacity = '0.5';
         setupNavItem.style.pointerEvents = 'none';
         setupNavItem.classList.add('disabled');
@@ -819,6 +816,14 @@ class CalorieTracker {
         // Load and display history data
         setTimeout(() => this.updateHistoryPage(), 100);
       }
+    }
+
+    if (pageId === 'setupPage' && this.userProfile && this.userProfile.targetCalories && this.isTrackerUnlocked()) {
+      this.showNotification('Setup is already complete for this account.');
+      this.dailyEntries = this.loadDailyEntries();
+      this.dailyNotes = this.loadDailyNotes();
+      this.hydrateDailyDataFromDatabase().then(() => this.updateUI());
+      pageId = 'trackerPage';
     }
 
     // Hide all pages
@@ -1710,39 +1715,32 @@ class CalorieTracker {
       return;
     }
     
-    // Calculate total consumed calories from all history
     let totalConsumed = 0;
-    let daysWithEntries = 0;
-    
-    // Get all stored daily entries for this profile
-    const profilePrefix = `dailyEntries_${this.currentProfileKey}_`;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(profilePrefix)) {
-        const dayEntries = JSON.parse(localStorage.getItem(key)) || [];
-        if (dayEntries.length > 0) {
-          const dayTotal = dayEntries.reduce((sum, entry) => sum + entry.calories, 0);
-          totalConsumed += dayTotal;
-          daysWithEntries++;
-        }
+    const consumedDates = new Set();
+    const history = this.loadDailyHistory();
+
+    Object.entries(history).forEach(([dateKey, dayRecord]) => {
+      const dayEntries = Array.isArray(dayRecord.entries) ? dayRecord.entries : [];
+      const dayTotal = dayEntries.length > 0
+        ? dayEntries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0)
+        : Number(dayRecord.consumed) || 0;
+
+      if (dayTotal > 0 || dayEntries.length > 0) {
+        totalConsumed += dayTotal;
+        consumedDates.add(dayRecord.date || dateKey);
       }
-    }
-    
-    // Add today's entries if not already counted
-    const todayKey = `dailyEntries_${this.currentProfileKey}_${this.getTodayKey()}`;
-    const todayStored = localStorage.getItem(todayKey);
-    if (!todayStored && this.dailyEntries.length > 0) {
-      const todayTotal = this.dailyEntries.reduce((sum, entry) => sum + entry.calories, 0);
+    });
+
+    const today = this.getTodayKey();
+    if (!consumedDates.has(today) && this.dailyEntries.length > 0) {
+      const todayTotal = this.dailyEntries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0);
       totalConsumed += todayTotal;
-      daysWithEntries++;
+      consumedDates.add(today);
     }
     
-    // Calculate days remaining from the selected setup timeline.
     const timeGoalDays = this.userProfile.selectedTimelineDays || this.getTimeGoalInDays(this.userProfile.timeGoal);
-    const profileCreatedDate = new Date(this.userProfile.createdAt);
-    const today = new Date();
-    const daysSinceStart = Math.floor((today - profileCreatedDate) / (1000 * 60 * 60 * 24));
-    const daysRemaining = Math.max(0, timeGoalDays - daysSinceStart);
+    const daysWithEntries = consumedDates.size;
+    const daysRemaining = Math.max(0, timeGoalDays - daysWithEntries);
     
     // Update metric displays
     totalConsumedEl.textContent = totalConsumed.toLocaleString();
@@ -2311,10 +2309,13 @@ class CalorieTracker {
       const existingHistory = JSON.parse(localStorage.getItem(historyKey) || '{}');
       
       // Update today's entry
+      const consumed = this.dailyEntries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0);
       existingHistory[today] = {
         id: `${this.currentProfileKey}_${today}`,
         profileKey: this.currentProfileKey,
         date: today,
+        consumed,
+        goal: this.userProfile.targetCalories || 0,
         entries: [...this.dailyEntries],
         notes: this.loadDailyNotes(),
         timestamp: new Date().toISOString()
